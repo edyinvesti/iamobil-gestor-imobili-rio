@@ -17,6 +17,8 @@ import { ConfirmationModal } from "./components/ConfirmationModal";
 import { User, Bell, Search } from "lucide-react";
 
 export default function App() {
+  const [showSplash, setShowSplash] = React.useState(true);
+  if (showSplash) return <SplashScreen onEnter={() => setShowSplash(false)} />;
   const [properties, setProperties] = useState<Property[]>([]);
   const [view, setView] = useState<'dashboard' | 'form' | 'details' | 'profile' | 'business-card' | 'search'>('dashboard');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -293,4 +295,5 @@ export default function App() {
     </div>
   );
 }
+
 
