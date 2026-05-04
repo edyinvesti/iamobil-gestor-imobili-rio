@@ -1,3 +1,4 @@
+﻿import { SplashScreen } from "./components/SplashScreen";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -33,7 +34,7 @@ export default function App() {
         const stressProps: Property[] = [];
         stressProps.push({
           id: crypto.randomUUID(),
-          title: "BIG TITLE TEST QUEBRA LAYOUT O MAIOR TÍTULO DO MUNDO COM EMOJIS GIGANTES E TEXTO LONGO PRA VER SE ENCAIXA BEM NO COMPONENTE 🚀 🏢🔥",
+          title: "BIG TITLE TEST QUEBRA LAYOUT O MAIOR TÃTULO DO MUNDO COM EMOJIS GIGANTES E TEXTO LONGO PRA VER SE ENCAIXA BEM NO COMPONENTE ðŸš€ ðŸ¢ðŸ”¥",
           type: "Apartamento",
           offerType: "Venda",
           price: 999999999999.99,
@@ -44,7 +45,7 @@ export default function App() {
           kitchens: 5,
           parkingSpaces: 100,
           address: "Rua do Estresse, 999 - Bairro QA",
-          description: "Teste de estresse com texto muito longo 🏢🏡🏢🔥🔥🔥\n\n ".repeat(5),
+          description: "Teste de estresse com texto muito longo ðŸ¢ðŸ¡ðŸ¢ðŸ”¥ðŸ”¥ðŸ”¥\n\n ".repeat(5),
           images: [],
           amenities: ["Piscina de Ouro", "Heliponto Triplo", "Cinema 4D"],
           createdAt: new Date().toISOString(),
@@ -54,7 +55,7 @@ export default function App() {
         for (let i = 0; i < 110; i++) {
           stressProps.push({
             id: crypto.randomUUID(),
-            title: `Imóvel Carga #${i}`,
+            title: `ImÃ³vel Carga #${i}`,
             type: i % 2 === 0 ? "Casa" : "Apartamento",
             offerType: i % 3 === 0 ? "Aluguel" : "Venda",
             price: 500000 + (Math.random() * 500000),
@@ -65,7 +66,7 @@ export default function App() {
             kitchens: 1,
             parkingSpaces: 1,
             address: `Rua Carga Pesada ${i}00`,
-            description: "Descrição gerada para o teste de carga...",
+            description: "DescriÃ§Ã£o gerada para o teste de carga...",
             images: [],
             amenities: ["Piscina", "Churrasqueira"],
             createdAt: new Date().toISOString(),
@@ -157,7 +158,7 @@ export default function App() {
         saveProperties(finalUpdated);
       }
     } catch (e: any) {
-      console.error("Erro na integração:", e);
+      console.error("Erro na integraÃ§Ã£o:", e);
     }
     
     setView('dashboard');
@@ -286,9 +287,10 @@ export default function App() {
             setPropertyToDelete(null);
           }
         }}
-        title="Excluir Imóvel"
-        message="Tem certeza que deseja remover este imóvel da sua carteira?"
+        title="Excluir ImÃ³vel"
+        message="Tem certeza que deseja remover este imÃ³vel da sua carteira?"
       />
     </div>
   );
 }
+
