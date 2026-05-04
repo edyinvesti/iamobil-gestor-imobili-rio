@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: iamobil-gestor
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npx vite preview --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: VITE_API_URL
+        sync: false
