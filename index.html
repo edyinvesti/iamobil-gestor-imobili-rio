@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -72,13 +72,32 @@
     <script>
       function dismissSplash() {
         const splash = document.getElementById('splash-overlay');
+        if (!splash) return;
+
+        // Som de Startup / Transição
+        const startup = new Audio('https://assets.mixkit.co/active_storage/sfx/2432/2432-preview.mp3');
+        startup.volume = 0.4;
+        startup.play().catch(e => console.log("Audio blocked", e));
+
+        // Boas-vindas Vocal (IA Nativa)
+        setTimeout(() => {
+          const msg = new SpeechSynthesisUtterance();
+          msg.text = "Bem-vindo ao iAmobil. Sua plataforma está pronta.";
+          msg.lang = 'pt-BR';
+          msg.rate = 0.9;
+          msg.volume = 0.8;
+          window.speechSynthesis.speak(msg);
+        }, 600);
+
+
         splash.classList.add('hide');
-        setTimeout(() => splash.remove(), 1000);
+        setTimeout(() => splash.remove(), 2000);
       }
-      // Easter egg: Enter key
+      // Easter egg: Enter key tbm aciona o áudio
       document.addEventListener('keypress', e => {
         if (e.key === 'Enter') dismissSplash();
       });
+
     </script>
   </body>
 </html>

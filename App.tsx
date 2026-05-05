@@ -1,4 +1,4 @@
-﻿import { SplashScreen } from "./components/SplashScreen";
+import { SplashScreen } from "./components/SplashScreen";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -18,7 +18,7 @@ import { User, Bell, Search } from "lucide-react";
 
 export default function App() {
   const [showSplash, setShowSplash] = React.useState(true);
-  if (showSplash) return <SplashScreen onEnter={() => setShowSplash(false)} />;
+  
   const [properties, setProperties] = useState<Property[]>([]);
   const [view, setView] = useState<'dashboard' | 'form' | 'details' | 'profile' | 'business-card' | 'search'>('dashboard');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -36,7 +36,7 @@ export default function App() {
         const stressProps: Property[] = [];
         stressProps.push({
           id: crypto.randomUUID(),
-          title: "BIG TITLE TEST QUEBRA LAYOUT O MAIOR TÃTULO DO MUNDO COM EMOJIS GIGANTES E TEXTO LONGO PRA VER SE ENCAIXA BEM NO COMPONENTE ðŸš€ ðŸ¢ðŸ”¥",
+          title: "BIG TITLE TEST QUEBRA LAYOUT O MAIOR TÃ TULO DO MUNDO COM EMOJIS GIGANTES E TEXTO LONGO PRA VER SE ENCAIXA BEM NO COMPONENTE ðŸš€ ðŸ ¢ðŸ”¥",
           type: "Apartamento",
           offerType: "Venda",
           price: 999999999999.99,
@@ -47,7 +47,7 @@ export default function App() {
           kitchens: 5,
           parkingSpaces: 100,
           address: "Rua do Estresse, 999 - Bairro QA",
-          description: "Teste de estresse com texto muito longo ðŸ¢ðŸ¡ðŸ¢ðŸ”¥ðŸ”¥ðŸ”¥\n\n ".repeat(5),
+          description: "Teste de estresse com texto muito longo ðŸ ¢ðŸ ¡ðŸ ¢ðŸ”¥ðŸ”¥ðŸ”¥\n\n ".repeat(5),
           images: [],
           amenities: ["Piscina de Ouro", "Heliponto Triplo", "Cinema 4D"],
           createdAt: new Date().toISOString(),
@@ -197,6 +197,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [properties]);
 
+  if (showSplash) return <SplashScreen onEnter={() => setShowSplash(false)} />;
+
   return (
     <div className="min-h-screen bg-[#030303] flex text-white font-sans selection:bg-orange-500 selection:text-white">
       <Sidebar currentView={view} onViewChange={setView} profile={profile} />
@@ -234,11 +236,11 @@ export default function App() {
             {view === 'dashboard' && (
               <motion.div key="dash" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <Dashboard 
-                  properties={properties} 
-                  onAddClick={() => { setSelectedProperty(null); setView('form'); }}
-                  onPropertyClick={(p) => { setSelectedProperty(p); setView('details'); }}
-                  onDelete={setPropertyToDelete}
-                  onEdit={(p) => { setSelectedProperty(p); setView('form'); }}
+                   properties={properties} 
+                   onAddClick={() => { setSelectedProperty(null); setView('form'); }}
+                   onPropertyClick={(p) => { setSelectedProperty(p); setView('details'); }}
+                   onDelete={setPropertyToDelete}
+                   onEdit={(p) => { setSelectedProperty(p); setView('form'); }}
                 />
               </motion.div>
             )}
@@ -246,9 +248,9 @@ export default function App() {
             {view === 'form' && (
               <motion.div key="form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="p-6 lg:p-12">
                 <PropertyForm 
-                  onSave={handleSaveProperty}
-                  onCancel={() => setView('dashboard')}
-                  initialData={selectedProperty || undefined}
+                   onSave={handleSaveProperty}
+                   onCancel={() => setView('dashboard')}
+                   initialData={selectedProperty || undefined}
                 />
               </motion.div>
             )}
@@ -270,9 +272,9 @@ export default function App() {
         <AnimatePresence>
           {view === 'details' && selectedProperty && (
             <PropertyDetails 
-              property={selectedProperty}
-              profile={profile}
-              onClose={() => setView('dashboard')}
+               property={selectedProperty}
+               profile={profile}
+               onClose={() => setView('dashboard')}
             />
           )}
         </AnimatePresence>
@@ -295,5 +297,3 @@ export default function App() {
     </div>
   );
 }
-
-
