@@ -36,5 +36,7 @@ export interface UserProfile {
   name: string;
   creci: string;
   photo: string;
+  email: string;
+  phone: string;
   telegramId?: string;
 }

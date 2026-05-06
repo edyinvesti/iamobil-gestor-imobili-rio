@@ -73,7 +73,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                              {property.remoteId && (
                                 <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500 rounded-full text-[9px] font-black uppercase text-white">
                                     <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                    Sincronizado IA
+                                    Conectado ao Hub
                                 </div>
                              )}
                         </div>
@@ -94,7 +94,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                                 </button>
                              </div>
                         </div>
-                        <h1 className="text-4xl lg:text-7xl font-serif font-bold leading-[1]">{property.title}</h1>
+                        <h1 className="text-3xl lg:text-5xl font-black leading-tight tracking-tight">{property.title}</h1>
                         <p className="text-gray-500 text-lg lg:text-xl flex items-center gap-3">
                             <MapPin size={20} className="text-orange-500" />
                             {property.address}
@@ -135,10 +135,9 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                         
                         <button 
                             disabled={isPublishing || (property.remoteId && property.remoteStatus === 'approved')}
-                            className="group relative px-12 py-6 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-orange-500 hover:text-white transition-all shadow-2xl active:scale-95 disabled:opacity-50 print:hidden"
+                            className="group relative px-10 py-5 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-1 transition-all shadow-xl active:scale-95 disabled:opacity-50 print:hidden"
                         >
                             {isPublishing ? "Transmitindo..." : "Transmitir para Rede IAmobil"}
-                            <div className="absolute inset-0 rounded-3xl group-hover:blur-xl group-hover:bg-orange-500/20 transition-all -z-10" />
                         </button>
                     </div>
                 </div>

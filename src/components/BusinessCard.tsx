@@ -49,7 +49,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
                 <div className="px-10 pb-16 -mt-16">
                     <div className="relative inline-block mb-10">
                         <div className="w-32 h-32 rounded-[2.5rem] bg-[#111] border-8 border-[#030303] flex items-center justify-center overflow-hidden shadow-2xl">
-                             <div className="text-4xl font-serif font-black text-white">{profile.name.charAt(0)}</div>
+                             <div className="text-4xl font-black text-white">{profile.name.charAt(0)}</div>
                         </div>
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-2xl border-4 border-[#030303] flex items-center justify-center">
                             <ShieldCheck size={20} className="text-white" />
@@ -57,7 +57,7 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
                     </div>
 
                     <div className="space-y-2 mb-12">
-                        <h1 className="text-5xl font-serif font-bold text-white tracking-tighter">{profile.name}</h1>
+                        <h1 className="text-4xl font-black text-white tracking-tight">{profile.name}</h1>
                         <div className="flex items-center gap-3">
                             <span className="px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-[10px] font-black uppercase text-orange-500 tracking-widest">Corretor de Elite</span>
                             <span className="text-gray-600 font-bold text-[10px] uppercase tracking-widest leading-none">CRECI {profile.creci}</span>

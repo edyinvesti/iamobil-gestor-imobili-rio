@@ -31,23 +31,23 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl p-8 space-y-8"
+            className="glass rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl p-8 space-y-8 border border-white/5"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex flex-col items-center text-center gap-6">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500">
                 <AlertCircle size={32} />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-serif font-medium text-gray-900">{title}</h3>
-                <p className="text-gray-400 font-medium">{message}</p>
+                <h3 className="text-xl font-black text-white tracking-tight">{title}</h3>
+                <p className="text-gray-500 font-medium text-sm">{message}</p>
               </div>
             </div>
 
             <div className="flex gap-4">
               <button
                 onClick={onClose}
-                className="flex-1 py-4 border border-gray-100 rounded-2xl font-black text-[10px] uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all"
+                className="flex-1 py-4 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest text-gray-400 hover:bg-white/5 transition-all"
               >
                 Cancelar
               </button>
