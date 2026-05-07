@@ -150,18 +150,31 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         }
     };
 
+    const generateId = () => {
+        try {
+            return crypto.randomUUID();
+        } catch (e) {
+            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        // Delay slight to let the UI show "Salvando" before navigation
-        setTimeout(() => {
+        
+        try {
+            const id = initialData?.id || generateId();
             onSave({
                 ...formData,
-                id: initialData?.id || crypto.randomUUID(),
+                id,
                 images,
                 createdAt: initialData?.createdAt || Date.now(),
             } as Property);
-        }, 100);
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            setIsSaving(false);
+            alert("Ocorreu um erro ao salvar o imóvel. Verifique os dados e tente novamente.");
+        }
     };
 
     return (
