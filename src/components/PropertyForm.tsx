@@ -277,8 +277,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Valor do Ativo</label>
                             <div className="relative">
                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 font-black text-xs uppercase">R$</span>
                                 <input
@@ -291,7 +289,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     placeholder="0,00"
                                 />
                             </div>
-                        </div>
+                            {(formData.type === 'Fazenda' || formData.type === 'Chácara') && formData.size > 0 && (
+                                <p className="text-[9px] text-emerald-500/70 font-black uppercase tracking-widest pl-1 mt-2">
+                                    Valor Médio: R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(formData.price / formData.size)} por {formData.sizeUnit}
+                                </p>
+                            )}
                     </div>
                 </div>
 
@@ -452,15 +454,20 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                         placeholder="0"
                                     />
                                     <select
-                                        className="flex-1 bg-black/40 border border-white/5 rounded-2xl px-2 py-5 text-white text-[10px] font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer text-center uppercase"
+                                        className="flex-1 bg-black/40 border border-orange-500/20 rounded-2xl px-2 py-5 text-white text-[10px] font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all cursor-pointer text-center uppercase"
                                         value={formData.sizeUnit}
                                         onChange={e => setFormData({ ...formData, sizeUnit: e.target.value as AreaUnit })}
                                     >
-                                        <option value="m²" className="bg-zinc-900">m²</option>
-                                        <option value="Hectares" className="bg-zinc-900">Hectares</option>
-                                        <option value="Alqueires" className="bg-zinc-900">Alqueires</option>
+                                        <option value="m²" className="bg-zinc-900 border-none">m²</option>
+                                        <option value="Hectares" className="bg-zinc-900 border-none">Hectares</option>
+                                        <option value="Alqueires" className="bg-zinc-900 border-none">Alqueires</option>
                                     </select>
                                 </div>
+                                {formData.sizeUnit === 'Alqueires' && (
+                                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-wider pl-1 italic mt-2 animate-pulse">
+                                        * Padrão Alqueire Goiano: 4,84 Hectares (48.400 m²)
+                                    </p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
