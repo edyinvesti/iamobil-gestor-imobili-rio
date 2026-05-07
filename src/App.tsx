@@ -18,12 +18,18 @@ import { Property } from "./types";
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const { properties, saveProperty, deleteProperty, loading } = useProperties();
-  const { profile, updateProfile } = useUser();
+  const { profile, updateProfile, logout } = useUser();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    setShowSplash(true);
+    navigate('/');
+  };
 
   // Helper to sync view state for legacy components if needed
   const currentView = location.pathname.split('/')[1] || 'dashboard';
@@ -41,6 +47,7 @@ export default function App() {
         currentView={currentView} 
         onViewChange={(v) => navigate(v === 'dashboard' ? '/' : `/${v}`)} 
         profile={profile} 
+        onLogout={handleLogout}
       />
       
       <div className="flex-1 flex flex-col h-screen relative min-w-0 overflow-hidden">

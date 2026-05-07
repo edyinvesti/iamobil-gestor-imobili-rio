@@ -10,14 +10,14 @@ export function SplashScreen({ onEnter }: { onEnter: () => void }) {
   const barsRef = useRef<HTMLDivElement>(null);
 
   const { initAudio, playOpen, playKey, playEnter, playStartup } = useSplashScreenAudio();
-  useSplashScreenWebGL(canvasRef, stage);
+  useSplashScreenWebGL(canvasRef as React.RefObject<HTMLCanvasElement>, stage);
 
   const startExp = () => {
     initAudio();
     playStartup();
     setStage('main');
     setTimeout(() => {
-      playOpen(barsRef);
+      playOpen(barsRef as React.RefObject<HTMLDivElement>);
       setTypewriterStarted(true);
     }, 600);
   };

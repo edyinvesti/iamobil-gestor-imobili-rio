@@ -134,7 +134,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                         </div>
                         
                         <button 
-                            disabled={isPublishing || (property.remoteId && property.remoteStatus === 'approved')}
+                            disabled={isPublishing || Boolean(property.remoteId && property.remoteStatus === 'approved')}
                             className="group relative px-10 py-5 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-1 transition-all shadow-xl active:scale-95 disabled:opacity-50 print:hidden"
                         >
                             {isPublishing ? "Transmitindo..." : "Transmitir para Rede IAmobil"}

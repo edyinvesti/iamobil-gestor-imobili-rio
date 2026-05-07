@@ -37,7 +37,8 @@ export function useProperties() {
     
     saveProperties(updated);
     
-    const API_BASE = import.meta.env.VITE_API_URL || '';
+    // @ts-ignore
+    const API_BASE = (import.meta as any).env.VITE_API_URL || '';
     try {
       const response = await fetch(`${API_BASE}/api/partner/properties`, {
         method: "POST",
@@ -75,7 +76,8 @@ export function useProperties() {
 
       if (pendingIds.length === 0) return;
 
-      const API_BASE = import.meta.env.VITE_API_URL || '';
+      // @ts-ignore
+      const API_BASE = (import.meta as any).env.VITE_API_URL || '';
       try {
         const res = await fetch(`${API_BASE}/api/partner/properties/status?ids=${pendingIds.join(',')}`);
         if (res.ok) {

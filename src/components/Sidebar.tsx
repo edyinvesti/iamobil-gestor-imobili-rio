@@ -6,9 +6,10 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: any) => void;
   profile: { name: string; creci: string; photo?: string };
+  onLogout: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, profile }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, profile, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Carteira', icon: Home },
     { id: 'form', label: 'Novo Imóvel', icon: PlusSquare },
@@ -71,7 +72,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, pro
             </div>
           </div>
         </div>
-        <button className="w-full mt-4 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all text-[9px] font-black uppercase tracking-widest border border-white/5 hover:border-red-500/20">
+        <button 
+          onClick={onLogout}
+          className="w-full mt-4 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all text-[9px] font-black uppercase tracking-widest border border-white/5 hover:border-red-500/20"
+        >
           <LogOut size={12} /> Encerrar Sessão
         </button>
       </div>

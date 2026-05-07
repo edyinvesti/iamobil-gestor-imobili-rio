@@ -4,6 +4,7 @@ import { UserProfile } from '../types';
 interface UserContextType {
   profile: UserProfile;
   updateProfile: (newProfile: UserProfile) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -33,8 +34,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('iamobil_profile', JSON.stringify(newProfile));
   }, []);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('iamobil_profile');
+    localStorage.removeItem('iamobil_properties'); // Opcional: limpa cache de imóveis também
+    setProfile({
+      name: 'Edy Investi',
+      creci: '987456-F',
+      photo: '',
+      email: 'contato@iamobil.com.br',
+      phone: '(11) 99999-9999'
+    });
+  }, []);
+
   return (
-    <UserContext.Provider value={{ profile, updateProfile }}>
+    <UserContext.Provider value={{ profile, updateProfile, logout }}>
       {children}
     </UserContext.Provider>
   );
