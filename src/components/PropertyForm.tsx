@@ -34,6 +34,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         description: initialData?.description || '',
         amenities: initialData?.amenities || [] as string[],
     });
+    const [displayPrice, setDisplayPrice] = useState(
+        initialData?.price 
+            ? new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(initialData.price) 
+            : ''
+    );
     const [images, setImages] = useState<string[]>(initialData?.images || []);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +52,19 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                 reader.readAsDataURL(file);
             });
         }
+    };
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (!value) {
+            setFormData({ ...formData, price: 0 });
+            setDisplayPrice('');
+            return;
+        }
+        
+        const numberValue = Number(value) / 100;
+        setFormData({ ...formData, price: numberValue });
+        setDisplayPrice(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(numberValue));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -169,11 +187,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 font-black text-xs uppercase">R$</span>
                                 <input
                                     required
-                                    type="number"
+                                    type="text"
+                                    inputMode="numeric"
                                     className="w-full bg-black/60 border border-orange-500/10 rounded-2xl pl-14 pr-5 py-5 text-white text-2xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all"
-                                    value={formData.price || ''}
-                                    onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                                    placeholder="0"
+                                    value={displayPrice}
+                                    onChange={handlePriceChange}
+                                    placeholder="0,00"
                                 />
                             </div>
                         </div>
