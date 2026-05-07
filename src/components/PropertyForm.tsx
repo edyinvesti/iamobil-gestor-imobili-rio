@@ -15,6 +15,7 @@ const AMENITIES_OPTIONS = [
 ];
 
 export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, initialData }) => {
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         type: initialData?.type || 'Apartamento' as PropertyType,
@@ -50,12 +51,16 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({
-            ...formData,
-            id: initialData?.id || crypto.randomUUID(),
-            images,
-            createdAt: initialData?.createdAt || Date.now(),
-        } as Property);
+        setIsSaving(true);
+        // Delay slight to let the UI show "Salvando" before navigation
+        setTimeout(() => {
+            onSave({
+                ...formData,
+                id: initialData?.id || crypto.randomUUID(),
+                images,
+                createdAt: initialData?.createdAt || Date.now(),
+            } as Property);
+        }, 100);
     };
 
     return (
@@ -293,10 +298,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                 <div className="pt-8 flex justify-center">
                     <button
                         type="submit"
-                        className="w-full max-w-md h-20 bg-orange-500 hover:bg-orange-600 rounded-[30px] font-black text-sm uppercase tracking-[0.4em] text-white shadow-2xl shadow-orange-500/40 transition-all active:scale-[0.98] flex items-center justify-center gap-4 group"
+                        disabled={isSaving}
+                        className="w-full max-w-md h-20 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-800 disabled:scale-95 rounded-[30px] font-black text-sm uppercase tracking-[0.4em] text-white shadow-2xl shadow-orange-500/40 transition-all active:scale-[0.98] flex items-center justify-center gap-4 group"
                     >
-                        <CheckCircle2 size={24} className="group-hover:scale-110 transition-transform" />
-                        Finalizar e Publicar Ativo
+                        <CheckCircle2 size={24} className={`${isSaving ? 'animate-spin' : 'group-hover:scale-110'} transition-transform`} />
+                        {isSaving ? 'Publicando...' : 'Finalizar e Publicar Ativo'}
                     </button>
                 </div>
             </form>

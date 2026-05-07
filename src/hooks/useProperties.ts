@@ -20,8 +20,14 @@ export function useProperties() {
 
   // Save properties to localStorage
   const saveProperties = useCallback((newProperties: Property[]) => {
-    setProperties(newProperties);
-    localStorage.setItem('iamobil_properties', JSON.stringify(newProperties));
+    try {
+      setProperties(newProperties);
+      localStorage.setItem('iamobil_properties', JSON.stringify(newProperties));
+    } catch (e) {
+      console.warn("Storage quota exceeded, saving state only in memory", e);
+      // Fallback: update state anyway so UI works even if storage fails
+      setProperties(newProperties);
+    }
   }, []);
 
   const handleSaveProperty = useCallback(async (property: Property, profile: { name: string, creci: string }) => {
@@ -37,29 +43,34 @@ export function useProperties() {
     
     saveProperties(updated);
     
-    // @ts-ignore
-    const API_BASE = (import.meta as any).env.VITE_API_URL || '';
-    try {
-      const response = await fetch(`${API_BASE}/api/partner/properties`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...property,
-          brokerName: profile.name,
-          brokerCreci: profile.creci
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const finalUpdated = updated.map(p => 
-          p.id === property.id ? { ...p, remoteId: data.propertyId, remoteStatus: 'pending' as const } : p
-        );
-        saveProperties(finalUpdated);
-      }
-    } catch (e: any) {
-      console.error("Erro na integração:", e);
-    }
+    // Non-blocking background sync
+    (async () => {
+        // @ts-ignore
+        const API_BASE = (import.meta as any).env.VITE_API_URL || '';
+        try {
+          const response = await fetch(`${API_BASE}/api/partner/properties`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...property,
+              brokerName: profile.name,
+              brokerCreci: profile.creci
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setProperties(prev => prev.map(p => 
+              p.id === property.id ? { ...p, remoteId: data.propertyId, remoteStatus: 'pending' as const } : p
+            ));
+            // Trigger storage update with the remote ID
+            const latest = properties.map(p => p.id === property.id ? { ...p, remoteId: data.propertyId } : p);
+            localStorage.setItem('iamobil_properties', JSON.stringify(latest));
+          }
+        } catch (e: any) {
+          console.error("Erro na integração em background:", e);
+        }
+    })();
   }, [properties, saveProperties]);
 
   const deleteProperty = useCallback((id: string) => {
