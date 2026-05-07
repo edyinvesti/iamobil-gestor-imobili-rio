@@ -11,11 +11,11 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>({
-    name: 'Edy Investi',
-    creci: '987456-F',
+    name: '',
+    creci: '',
     photo: '',
-    email: 'contato@iamobil.com.br',
-    phone: '(11) 99999-9999'
+    email: '',
+    phone: ''
   });
 
   useEffect(() => {

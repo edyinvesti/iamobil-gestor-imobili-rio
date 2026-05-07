@@ -67,8 +67,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, pro
               </div>
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-black text-white truncate">{profile.name || 'Edy Investi'}</span>
-              <span className="text-[9px] text-gray-500 font-bold tracking-tighter">{profile.creci || 'CRECI 987456-F'}</span>
+              <span className="text-[11px] font-black text-white truncate">{profile.name || 'Identifique-se'}</span>
+              <span className="text-[9px] text-gray-500 font-bold tracking-tighter">{profile.creci || 'Configurar Perfil'}</span>
             </div>
           </div>
         </div>

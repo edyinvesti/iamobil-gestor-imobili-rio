@@ -39,7 +39,12 @@ export default function App() {
     navigate('/');
   };
 
-  if (showSplash) return <SplashScreen onEnter={() => setShowSplash(false)} />;
+  if (showSplash) return <SplashScreen onEnter={() => {
+    setShowSplash(false);
+    if (!profile.name) {
+      navigate('/profile');
+    }
+  }} />;
 
   return (
     <div className="min-h-screen bg-[#030303] flex text-white font-sans selection:bg-orange-500 selection:text-white">
