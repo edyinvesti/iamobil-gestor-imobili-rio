@@ -254,7 +254,15 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 <select
                                     className="w-full bg-black/40 border border-white/5 rounded-2xl px-4 py-4 text-white text-sm font-bold outline-none appearance-none cursor-pointer hover:bg-black/60"
                                     value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as PropertyType })}
+                                    onChange={e => {
+                                        const newType = e.target.value as PropertyType;
+                                        const isRural = newType === 'Fazenda' || newType === 'Chácara';
+                                        setFormData({ 
+                                            ...formData, 
+                                            type: newType,
+                                            sizeUnit: isRural ? 'Hectares' : 'm²' as AreaUnit
+                                        });
+                                    }}
                                 >
                                     <option className="bg-black text-white font-bold" value="Apartamento">Apartamento</option>
                                     <option className="bg-black text-white font-bold" value="Casa">Casa</option>
@@ -439,7 +447,17 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
 
                     {/* Especificações Técnicas */}
                     <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 space-y-8">
-                        <p className="text-[10px] font-black uppercase text-gray-500 tracking-[0.3em]">Especificações Técnicas</p>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-[0.3em]">Especificações Técnicas</p>
+                            {(formData.type === 'Fazenda' || formData.type === 'Chácara') && (
+                                <div className="mt-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                                    <p className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">
+                                        🌾 Modo Rural Ativo — Medidas em {formData.sizeUnit}
+                                    </p>
+                                    <p className="text-[8px] text-gray-500 mt-1">Preencha a quantidade de cada estrutura existente na propriedade.</p>
+                                </div>
+                            )}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -475,10 +493,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 </label>
                                 <input
                                     type="number"
+                                    min="0"
                                     className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                     value={formData.bedrooms || ''}
-                                    onChange={e => setFormData({ ...formData, bedrooms: Number(e.target.value) })}
-                                    placeholder="0"
+                                    onChange={e => setFormData({ ...formData, bedrooms: Math.max(0, Number(e.target.value)) })}
+                                    placeholder={(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Qtd. de sedes' : '0'}
                                 />
                             </div>
                         </div>
