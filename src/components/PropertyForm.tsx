@@ -123,7 +123,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Tipo</label>
                             <select
@@ -179,7 +179,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Square size={10} /> Área m²</label>
                             <input

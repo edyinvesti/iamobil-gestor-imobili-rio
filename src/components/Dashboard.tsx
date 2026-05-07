@@ -141,7 +141,7 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="w-[300px] shrink-0"
+                className="w-full sm:w-[300px] shrink-0"
               >
                 <PropertyCard 
                   property={property}

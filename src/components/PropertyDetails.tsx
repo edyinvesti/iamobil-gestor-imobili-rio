@@ -102,7 +102,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                     </header>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-4 md:grid-cols-4 gap-4 print:grid-cols-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 print:grid-cols-4">
                         {[
                           { label: 'm²', icon: Square, val: property.size },
                           { label: 'Dorm', icon: Bed, val: property.bedrooms },
