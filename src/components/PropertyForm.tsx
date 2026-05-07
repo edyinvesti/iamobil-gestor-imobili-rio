@@ -45,6 +45,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
             ? new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(initialData.price) 
             : ''
     );
+    const [displayArea, setDisplayArea] = useState(
+        initialData?.size 
+            ? new Intl.NumberFormat('pt-BR').format(initialData.size) 
+            : ''
+    );
     const [images, setImages] = useState<string[]>(initialData?.images || []);
     const [states, setStates] = useState<{ sigla: string, nome: string }[]>([]);
     const [cities, setCities] = useState<string[]>([]);
@@ -97,6 +102,19 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         const numberValue = Number(value) / 100;
         setFormData({ ...formData, price: numberValue });
         setDisplayPrice(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(numberValue));
+    };
+
+    const handleAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (!value) {
+            setFormData({ ...formData, size: 0 });
+            setDisplayArea('');
+            return;
+        }
+        
+        const numberValue = Number(value);
+        setFormData({ ...formData, size: numberValue });
+        setDisplayArea(new Intl.NumberFormat('pt-BR').format(numberValue));
     };
 
     const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,10 +430,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Square size={10} /> Área m²</label>
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="numeric"
                                     className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
-                                    value={formData.size || ''}
-                                    onChange={e => setFormData({ ...formData, size: Number(e.target.value) })}
+                                    value={displayArea}
+                                    onChange={handleAreaChange}
                                     placeholder="0"
                                 />
                             </div>
