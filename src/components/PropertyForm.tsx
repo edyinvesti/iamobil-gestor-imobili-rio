@@ -322,25 +322,42 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                         placeholder="Ex: Lourdes"
                                     />
                                     <datalist id="neighborhoods-list">
-                                        {/* Bairros de Anápolis (Região do Cliente) */}
-                                        <option value="Jundiaí" />
-                                        <option value="Jaiara" />
-                                        <option value="Centro" />
-                                        <option value="Anápolis City" />
-                                        <option value="Bairro de Lourdes" />
-                                        <option value="Cidade Universitária" />
-                                        <option value="Jardim Europa" />
-                                        <option value="Vila Jaiara" />
-                                        <option value="Jardim das Américas" />
-                                        <option value="Setor Sul" />
-                                        <option value="JK" />
-                                        <option value="Ibirapuera" />
-                                        <option value="Adriana Parque" />
-                                        <option value="Alexandria" />
-                                        <option value="Alvorada" />
-                                        <option value="Santa Isabel" />
-                                        <option value="Santana" />
-                                        <option value="Recanto do Sol" />
+                                        {formData.city === 'Anápolis' && (
+                                            <>
+                                                <option value="Jundiaí" />
+                                                <option value="Jaiara" />
+                                                <option value="Centro" />
+                                                <option value="Anápolis City" />
+                                                <option value="Bairro de Lourdes" />
+                                                <option value="Cidade Universitária" />
+                                                <option value="Jardim Europa" />
+                                                <option value="Vila Jaiara" />
+                                                <option value="Jardim das Américas" />
+                                                <option value="Setor Sul" />
+                                                <option value="JK" />
+                                                <option value="Ibirapuera" />
+                                                <option value="Adriana Parque" />
+                                                <option value="Alexandria" />
+                                                <option value="Alvorada" />
+                                                <option value="Santa Isabel" />
+                                                <option value="Santana" />
+                                                <option value="Recanto do Sol" />
+                                            </>
+                                        )}
+                                        {formData.city === 'Catalão' && (
+                                            <>
+                                                <option value="Centro" />
+                                                <option value="Santa Cruz" />
+                                                <option value="Vila Margarida" />
+                                                <option value="Jardim Paraíso" />
+                                                <option value="Ipanema" />
+                                                <option value="Castelo Branco" />
+                                                <option value="Setor Universitário" />
+                                                <option value="Parque das Nações" />
+                                                <option value="Pontal Norte" />
+                                                <option value="Vila Cruzeiro" />
+                                            </>
+                                        )}
                                     </datalist>
                                 </div>
                                 <div className="flex gap-4">
