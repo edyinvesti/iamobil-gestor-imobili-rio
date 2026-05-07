@@ -23,6 +23,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         price: initialData?.price || 0,
         status: initialData?.status || 'Disponível' as PropertyStatus,
         address: initialData?.address || '',
+        zipCode: initialData?.zipCode || '',
+        neighborhood: initialData?.neighborhood || '',
+        city: initialData?.city || '',
+        state: initialData?.state || '',
+        streetNumber: initialData?.streetNumber || '',
+        complement: initialData?.complement || '',
         size: initialData?.size || 0,
         sizeUnit: initialData?.sizeUnit || 'm²' as AreaUnit,
         bedrooms: initialData?.bedrooms || 0,
@@ -65,6 +71,27 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         const numberValue = Number(value) / 100;
         setFormData({ ...formData, price: numberValue });
         setDisplayPrice(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(numberValue));
+    };
+
+    const handleCEPBlur = async () => {
+        const cep = formData.zipCode?.replace(/\D/g, '');
+        if (cep?.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        address: data.logradouro,
+                        neighborhood: data.bairro,
+                        city: data.localidade,
+                        state: data.uf
+                    }));
+                }
+            } catch (error) {
+                console.error("Erro ao buscar CEP:", error);
+            }
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -205,9 +232,32 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                     {/* Localização e Descrição */}
                     <div className="space-y-8">
                         <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 space-y-5">
-                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-[0.3em]">Localização</p>
+                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-[0.3em]">Localização Profissional</p>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">CEP</label>
+                                    <input
+                                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
+                                        value={formData.zipCode}
+                                        onBlur={handleCEPBlur}
+                                        onChange={e => setFormData({ ...formData, zipCode: e.target.value })}
+                                        placeholder="00000-000"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Número</label>
+                                    <input
+                                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
+                                        value={formData.streetNumber}
+                                        onChange={e => setFormData({ ...formData, streetNumber: e.target.value })}
+                                        placeholder="Ex: 123"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Endereço</label>
+                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Logradouro (Rua/Av)</label>
                                 <div className="relative">
                                     <MapPin size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" />
                                     <input
@@ -216,6 +266,27 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                         value={formData.address}
                                         onChange={e => setFormData({ ...formData, address: e.target.value })}
                                         placeholder="Endereço completo"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Bairro</label>
+                                    <input
+                                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
+                                        value={formData.neighborhood}
+                                        onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+                                        placeholder="Bairro"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Cidade</label>
+                                    <input
+                                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
+                                        value={formData.city}
+                                        onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                        placeholder="Cidade"
                                     />
                                 </div>
                             </div>

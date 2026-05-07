@@ -16,6 +16,12 @@ export interface Property {
   price: number;
   status: PropertyStatus;
   address: string;
+  zipCode?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  streetNumber?: string;
+  complement?: string;
   size: number; // Valor numérico
   sizeUnit: AreaUnit; // m², Hectares, Alqueires
   bedrooms: number;
