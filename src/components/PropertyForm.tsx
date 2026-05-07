@@ -270,15 +270,17 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Logradouro (Rua/Av)</label>
+                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex justify-between">
+                                    <span>Logradouro (Rua/Av)</span>
+                                    <span className="text-[8px] text-orange-500/50">Opcional • Privacidade</span>
+                                </label>
                                 <div className="relative">
                                     <MapPin size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" />
                                     <input
-                                        required
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
                                         value={formData.address}
                                         onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                        placeholder="Endereço completo"
+                                        placeholder="Digite apenas se desejar divulgar a rua"
                                     />
                                 </div>
                             </div>
