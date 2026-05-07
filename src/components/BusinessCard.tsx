@@ -8,11 +8,21 @@ interface BusinessCardProps {
 }
 
 export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
+    const handleConnect = () => {
+        const text = `Olá ${profile.name}, vim através do seu Cartão Digital IAmobil e gostaria de conversar!`;
+        const url = `https://wa.me/${profile.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    };
+
+    const handleEmail = () => {
+        window.location.href = `mailto:${profile.email || 'contato@iamobil.com.br'}`;
+    };
+
     const handleShare = async () => {
         const shareData = {
-          title: profile.name,
-          text: `🤝 *${profile.name}*\n🏢 Corretor Parceiro IAmobil\n📜 CRECI: ${profile.creci}\n\nConecte-se comigo para os melhores ativos imobiliários!`,
-          url: 'https://iamobil.com.br' // Placeholder for actual web link
+          title: profile.name || 'Meu Cartão Digital',
+          text: `🤝 *${profile.name || 'Seu Consultor'}*\n🏢 Corretor Parceiro IAmobil\n📜 CRECI: ${profile.creci || '---'}\n\nConecte-se comigo para os melhores ativos imobiliários!`,
+          url: window.location.href
         };
 
         if (navigator.share) {
@@ -49,7 +59,11 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
                 <div className="px-10 pb-16 -mt-16">
                     <div className="relative inline-block mb-10">
                         <div className="w-32 h-32 rounded-[2.5rem] bg-[#111] border-8 border-[#030303] flex items-center justify-center overflow-hidden shadow-2xl">
-                             <div className="text-4xl font-black text-white">{profile.name.charAt(0)}</div>
+                             {profile.photo ? (
+                                <img src={profile.photo} className="w-full h-full object-cover" alt="" />
+                             ) : (
+                                <div className="text-4xl font-black text-white">{(profile.name || 'E').charAt(0)}</div>
+                             )}
                         </div>
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-2xl border-4 border-[#030303] flex items-center justify-center">
                             <ShieldCheck size={20} className="text-white" />
@@ -57,16 +71,19 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
                     </div>
 
                     <div className="space-y-2 mb-12">
-                        <h1 className="text-4xl font-black text-white tracking-tight">{profile.name}</h1>
+                        <h1 className="text-4xl font-black text-white tracking-tight">{profile.name || 'Seu Nome'}</h1>
                         <div className="flex items-center gap-3">
                             <span className="px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-[10px] font-black uppercase text-orange-500 tracking-widest">Corretor de Elite</span>
-                            <span className="text-gray-600 font-bold text-[10px] uppercase tracking-widest leading-none">CRECI {profile.creci}</span>
+                            <span className="text-gray-600 font-bold text-[10px] uppercase tracking-widest leading-none">CRECI {profile.creci || '---'}</span>
                         </div>
                     </div>
 
                     {/* Contact Links */}
                     <div className="grid grid-cols-1 gap-4 mb-12">
-                        <div className="flex items-center gap-6 p-6 bg-white/5 rounded-3xl border border-white/5 hover:bg-white/10 transition-all group">
+                        <button 
+                            onClick={handleConnect}
+                            className="w-full flex items-center gap-6 p-6 bg-white/5 rounded-3xl border border-white/5 hover:bg-white/10 transition-all group text-left"
+                        >
                             <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                                 <Phone size={20} />
                             </div>
@@ -74,17 +91,20 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
                                 <span className="text-[9px] font-black uppercase text-gray-500 tracking-widest">WhatsApp Business</span>
                                 <span className="text-lg font-bold text-white">Conectar Agora</span>
                             </div>
-                        </div>
+                        </button>
                         
-                        <div className="flex items-center gap-6 p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <button 
+                            onClick={handleEmail}
+                            className="w-full flex items-center gap-6 p-6 bg-white/5 rounded-3xl border border-white/5 hover:bg-white/10 transition-all text-left"
+                        >
                             <div className="p-4 bg-white/5 rounded-2xl text-gray-400">
                                 <Mail size={20} />
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black uppercase text-gray-500 tracking-widest">E-mail Corporativo</span>
-                                <span className="text-lg font-bold text-white truncate max-w-[200px]">contato@iamobil.com.br</span>
+                                <span className="text-lg font-bold text-white truncate max-w-[200px]">{profile.email || 'Não informado'}</span>
                             </div>
-                        </div>
+                        </button>
                     </div>
 
                     {/* QR Code Simulation */}
