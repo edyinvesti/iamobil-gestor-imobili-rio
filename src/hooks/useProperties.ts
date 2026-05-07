@@ -5,17 +5,65 @@ export function useProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load from localStorage
+  // Load from localStorage AND Cloud Sync
   useEffect(() => {
+    let localProps: Property[] = [];
     const savedProperties = localStorage.getItem('iamobil_properties');
     if (savedProperties) {
       try {
-        setProperties(JSON.parse(savedProperties));
+        localProps = JSON.parse(savedProperties);
+        setProperties(localProps);
       } catch (e) {
         console.error("Erro ao carregar os dados:", e);
       }
     }
-    setLoading(false);
+    
+    // Background cloud sync
+    const fetchCloudData = async () => {
+      const savedProfile = localStorage.getItem('iamobil_profile');
+      if (!savedProfile) {
+         setLoading(false);
+         return;
+      }
+      
+      let creci = '';
+      try { creci = JSON.parse(savedProfile).creci; } catch(e){}
+      if (!creci) {
+         setLoading(false);
+         return;
+      }
+
+      // @ts-ignore
+      const API_BASE = (import.meta as any).env.VITE_API_URL || '';
+      try {
+        const res = await fetch(`${API_BASE}/api/partner/properties?creci=${encodeURIComponent(creci)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.properties) {
+            // Merge logic: properties from Cloud supersede local, but we keep local-only items (drafts)
+            const cloudItems = Array.isArray(data.properties) ? data.properties : [];
+            const cloudIds = new Set(cloudItems.map((p: Property) => p.id));
+            const merged = [...cloudItems];
+            
+            localProps.forEach(lp => {
+              // If not found in cloud, keep it
+              if (!cloudIds.has(lp.id) && !cloudIds.has(lp.remoteId || '')) {
+                merged.push(lp);
+              }
+            });
+            
+            setProperties(merged);
+            localStorage.setItem('iamobil_properties', JSON.stringify(merged));
+          }
+        }
+      } catch(e) {
+        console.error("Erro ao sincronizar imóveis da nuvem:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCloudData();
   }, []);
 
   // Save properties to localStorage
