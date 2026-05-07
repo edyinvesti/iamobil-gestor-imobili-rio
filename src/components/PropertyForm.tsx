@@ -73,6 +73,18 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
         setDisplayPrice(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(numberValue));
     };
 
+    const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+        
+        let masked = value;
+        if (value.length > 5) {
+            masked = `${value.slice(0, 5)}-${value.slice(5)}`;
+        }
+        
+        setFormData(prev => ({ ...prev, zipCode: masked }));
+    };
+
     const handleCEPBlur = async () => {
         const cep = formData.zipCode?.replace(/\D/g, '');
         if (cep?.length === 8) {
@@ -241,7 +253,8 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
                                         value={formData.zipCode}
                                         onBlur={handleCEPBlur}
-                                        onChange={e => setFormData({ ...formData, zipCode: e.target.value })}
+                                        onChange={handleCEPChange}
+                                        maxLength={9}
                                         placeholder="00000-000"
                                     />
                                 </div>
