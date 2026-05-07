@@ -315,11 +315,18 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Bairro</label>
                                     <input
+                                        list="neighborhoods-list"
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
                                         value={formData.neighborhood || ''}
                                         onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
                                         placeholder="Ex: Lourdes"
                                     />
+                                    <datalist id="neighborhoods-list">
+                                        {/* Bairros populares ou aprendidos no futuro */}
+                                        <option value="Centro" />
+                                        <option value="Jardim" />
+                                        <option value="Setor" />
+                                    </datalist>
                                 </div>
                                 <div className="flex gap-4">
                                     <div className="flex-[2] space-y-2">
