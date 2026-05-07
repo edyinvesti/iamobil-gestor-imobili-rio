@@ -322,10 +322,25 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                         placeholder="Ex: Lourdes"
                                     />
                                     <datalist id="neighborhoods-list">
-                                        {/* Bairros populares ou aprendidos no futuro */}
+                                        {/* Bairros de Anápolis (Região do Cliente) */}
+                                        <option value="Jundiaí" />
+                                        <option value="Jaiara" />
                                         <option value="Centro" />
-                                        <option value="Jardim" />
-                                        <option value="Setor" />
+                                        <option value="Anápolis City" />
+                                        <option value="Bairro de Lourdes" />
+                                        <option value="Cidade Universitária" />
+                                        <option value="Jardim Europa" />
+                                        <option value="Vila Jaiara" />
+                                        <option value="Jardim das Américas" />
+                                        <option value="Setor Sul" />
+                                        <option value="JK" />
+                                        <option value="Ibirapuera" />
+                                        <option value="Adriana Parque" />
+                                        <option value="Alexandria" />
+                                        <option value="Alvorada" />
+                                        <option value="Santa Isabel" />
+                                        <option value="Santana" />
+                                        <option value="Recanto do Sol" />
                                     </datalist>
                                 </div>
                                 <div className="flex gap-4">
