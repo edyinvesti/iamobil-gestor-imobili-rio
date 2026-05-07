@@ -142,10 +142,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     value={formData.type}
                                     onChange={e => setFormData({ ...formData, type: e.target.value as PropertyType })}
                                 >
-                                    <option className="bg-black" value="Apartamento">Apartamento</option>
-                                    <option className="bg-black" value="Casa">Casa</option>
-                                    <option className="bg-black" value="Terreno">Terreno</option>
-                                    <option className="bg-black" value="Comercial">Comercial</option>
+                                    <option className="bg-black text-white font-bold" value="Apartamento">Apartamento</option>
+                                    <option className="bg-black text-white font-bold" value="Casa">Casa</option>
+                                    <option className="bg-black text-white font-bold" value="Terreno">Terreno</option>
+                                    <option className="bg-black text-white font-bold" value="Chácara">Chácara</option>
+                                    <option className="bg-black text-white font-bold" value="Fazenda">Fazenda</option>
+                                    <option className="bg-black text-white font-bold" value="Comercial">Comercial</option>
                                 </select>
                             </div>
                             <div className="space-y-2">

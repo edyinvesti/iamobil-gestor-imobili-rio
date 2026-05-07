@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Filter, SlidersHorizontal, House, Building2, LandPlot, Building } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, House, Building2, LandPlot, Building, Trees, Sprout } from "lucide-react";
 import { Property } from "../types";
 import { PropertyCard } from "./PropertyCard";
 import { SkeletonCard } from "./SkeletonCard";
@@ -20,6 +20,8 @@ const CATEGORIES = [
   { id: 'Apartamento', label: 'Apartamentos', icon: Building2 },
   { id: 'Casa', label: 'Casas', icon: House },
   { id: 'Terreno', label: 'Terrenos', icon: LandPlot },
+  { id: 'Chácara', label: 'Chácaras', icon: Trees },
+  { id: 'Fazenda', label: 'Fazendas', icon: Sprout },
   { id: 'Comercial', label: 'Comercial', icon: Building },
 ];
 
