@@ -166,7 +166,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Valor do Ativo</label>
                             <div className="relative">
-                                <DollarSign size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" />
+                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 font-black text-xs uppercase">R$</span>
                                 <input
                                     required
                                     type="number"
