@@ -29,6 +29,24 @@ export function ProfileView() {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    // Aplica a máscara (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+    let formatted = value;
+    if (value.length > 0) {
+      formatted = `(${value.slice(0, 2)}`;
+      if (value.length > 2) {
+        formatted += `) ${value.slice(2, 7)}`;
+        if (value.length > 7) {
+            formatted += `-${value.slice(7)}`;
+        }
+      }
+    }
+    setFormData(prev => ({ ...prev, phone: formatted }));
+  };
+
   return (
     <div className="p-6 lg:p-10 w-full max-w-5xl mx-auto">
 
@@ -140,7 +158,7 @@ export function ProfileView() {
                 <input
                   className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3.5 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700"
                   value={formData.phone}
-                  onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={handlePhoneChange}
                   placeholder="(11) 99999-9999"
                 />
               </div>
