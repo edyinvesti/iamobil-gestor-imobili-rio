@@ -450,7 +450,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Bed size={10} /> Quartos</label>
+                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
+                                    <Bed size={10} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Sedes / Casas' : 'Quartos'}
+                                </label>
                                 <input
                                     type="number"
                                     className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
@@ -483,7 +485,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">Salas</label>
+                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">
+                                    {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Currais' : 'Salas'}
+                                </label>
                                 <input
                                     type="number"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
@@ -493,7 +497,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">Cozinhas</label>
+                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">
+                                    {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Represas' : 'Cozinhas'}
+                                </label>
                                 <input
                                     type="number"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
@@ -505,13 +511,15 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Vagas de Garagem</label>
+                            <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
+                                <Car size={10} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Vagas / Galpões' : 'Vagas de Garagem'}
+                            </label>
                             <input
                                 type="number"
-                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all"
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                 value={formData.parkingSpaces || ''}
                                 onChange={e => setFormData({ ...formData, parkingSpaces: Number(e.target.value) })}
-                                placeholder="Quantidade de vagas"
+                                placeholder="0"
                             />
                         </div>
                     </div>
