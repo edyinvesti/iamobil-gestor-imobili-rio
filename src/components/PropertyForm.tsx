@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Property, PropertyType, OfferType, PropertyStatus, AreaUnit } from '../types';
-import { X, Camera, MapPin, Bed, Trash2, CheckCircle2, DollarSign, Square, Target } from 'lucide-react';
+import { X, Camera, MapPin, Bed, Trash2, CheckCircle2, DollarSign, Square, Target, Car } from 'lucide-react';
 
 interface PropertyFormProps {
     onSave: (property: Property) => void;
