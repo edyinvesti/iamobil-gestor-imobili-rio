@@ -46,6 +46,32 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
             : ''
     );
     const [images, setImages] = useState<string[]>(initialData?.images || []);
+    const [states, setStates] = useState<{ sigla: string, nome: string }[]>([]);
+    const [cities, setCities] = useState<string[]>([]);
+
+    React.useEffect(() => {
+        const fetchStates = async () => {
+            try {
+                const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const data = await response.json();
+                setStates(data.map((s: any) => ({ sigla: s.sigla, nome: s.nome })));
+            } catch (err) { console.error("Erro IBGE Estados:", err); }
+        };
+        fetchStates();
+    }, []);
+
+    React.useEffect(() => {
+        if (formData.state && formData.state.length === 2) {
+            const fetchCities = async () => {
+                try {
+                    const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.state}/municipios?orderBy=nome`);
+                    const data = await response.json();
+                    setCities(data.map((c: any) => c.nome));
+                } catch (err) { console.error("Erro IBGE Cidades:", err); }
+            };
+            fetchCities();
+        }
+    }, [formData.state]);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -262,7 +288,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Número</label>
                                     <input
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
-                                        value={formData.streetNumber}
+                                        value={formData.streetNumber || ''}
                                         onChange={e => setFormData({ ...formData, streetNumber: e.target.value })}
                                         placeholder="Ex: 123"
                                     />
@@ -278,7 +304,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     <MapPin size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" />
                                     <input
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
-                                        value={formData.address}
+                                        value={formData.address || ''}
                                         onChange={e => setFormData({ ...formData, address: e.target.value })}
                                         placeholder="Digite apenas se desejar divulgar a rua"
                                     />
@@ -290,7 +316,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Bairro</label>
                                     <input
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
-                                        value={formData.neighborhood}
+                                        value={formData.neighborhood || ''}
                                         onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
                                         placeholder="Ex: Lourdes"
                                     />
@@ -299,21 +325,30 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     <div className="flex-[2] space-y-2">
                                         <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Cidade</label>
                                         <input
+                                            list="cities-list"
                                             className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
-                                            value={formData.city}
+                                            value={formData.city || ''}
                                             onChange={e => setFormData({ ...formData, city: e.target.value })}
                                             placeholder="Ex: Goiânia"
                                         />
+                                        <datalist id="cities-list">
+                                            {cities.map(c => <option key={c} value={c} />)}
+                                        </datalist>
                                     </div>
                                     <div className="flex-1 space-y-2">
                                         <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">UF</label>
-                                        <input
-                                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-3 py-4 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800 text-center uppercase"
-                                            value={formData.state}
-                                            maxLength={2}
-                                            onChange={e => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                                            placeholder="GO"
-                                        />
+                                        <select
+                                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-3 py-4 text-white text-[10px] font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer text-center uppercase"
+                                            value={formData.state || ''}
+                                            onChange={e => setFormData({ ...formData, state: e.target.value })}
+                                        >
+                                            <option value="" disabled>UF</option>
+                                            {states.map(s => (
+                                                <option key={s.sigla} value={s.sigla} className="bg-zinc-900 text-white">
+                                                    {s.sigla}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
