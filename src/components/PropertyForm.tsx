@@ -285,24 +285,36 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Bairro</label>
                                     <input
                                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
                                         value={formData.neighborhood}
                                         onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
-                                        placeholder="Bairro"
+                                        placeholder="Ex: Lourdes"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Cidade</label>
-                                    <input
-                                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
-                                        value={formData.city}
-                                        onChange={e => setFormData({ ...formData, city: e.target.value })}
-                                        placeholder="Cidade"
-                                    />
+                                <div className="flex gap-4">
+                                    <div className="flex-[2] space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">Cidade</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800"
+                                            value={formData.city}
+                                            onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                            placeholder="Ex: Goiânia"
+                                        />
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1">UF</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-3 py-4 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-800 text-center uppercase"
+                                            value={formData.state}
+                                            maxLength={2}
+                                            onChange={e => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                                            placeholder="GO"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
