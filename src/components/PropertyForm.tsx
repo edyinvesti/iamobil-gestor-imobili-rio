@@ -428,15 +428,26 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Square size={10} /> Área m²</label>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
-                                    value={displayArea}
-                                    onChange={handleAreaChange}
-                                    placeholder="0"
-                                />
+                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Square size={10} /> Área Total</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        className="flex-[2.5] bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
+                                        value={displayArea}
+                                        onChange={handleAreaChange}
+                                        placeholder="0"
+                                    />
+                                    <select
+                                        className="flex-1 bg-black/40 border border-white/5 rounded-2xl px-2 py-5 text-white text-[10px] font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer text-center uppercase"
+                                        value={formData.sizeUnit}
+                                        onChange={e => setFormData({ ...formData, sizeUnit: e.target.value as AreaUnit })}
+                                    >
+                                        <option value="m²" className="bg-zinc-900">m²</option>
+                                        <option value="Hectares" className="bg-zinc-900">Hectares</option>
+                                        <option value="Alqueires" className="bg-zinc-900">Alqueires</option>
+                                    </select>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Bed size={10} /> Quartos</label>
