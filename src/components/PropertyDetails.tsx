@@ -102,17 +102,19 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                     </header>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 print:grid-cols-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 print:grid-cols-6">
                         {[
                           { label: 'm²', icon: Square, val: property.size },
                           { label: 'Dorm', icon: Bed, val: property.bedrooms },
                           { label: 'Suíte', icon: Bath, val: property.suites },
+                          { label: 'Salas', icon: Sofa, val: property.livingRooms },
+                          { label: 'Cozinhas', icon: Utensils, val: property.kitchens },
                           { label: 'Vagas', icon: Car, val: property.parkingSpaces },
                         ].map((item, idx) => (
-                           <div key={idx} className="glass p-6 rounded-[2rem] flex flex-col items-center gap-2 border-white/5">
+                           <div key={idx} className="glass p-5 rounded-[2rem] flex flex-col items-center gap-2 border-white/5">
                               <item.icon size={16} className="text-orange-500/50" />
                               <span className="text-[8px] font-black uppercase text-gray-600 tracking-widest">{item.label}</span>
-                              <span className="text-lg font-bold">{item.val}</span>
+                              <span className="text-lg font-bold">{item.val || 0}</span>
                            </div>
                         ))}
                     </div>

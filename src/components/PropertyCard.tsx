@@ -68,7 +68,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, o
           </p>
         </div>
 
-        <div className="flex items-center gap-6 text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-500">
           <div className="flex items-center gap-2">
             <Square size={12} className="text-orange-500/40" />
             <span className="text-[10px] font-black text-gray-400">{property.size}m²</span>
@@ -77,6 +77,16 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, o
             <Bed size={12} className="text-orange-500/40" />
             <span className="text-[10px] font-black text-gray-400">{property.bedrooms} Dorm</span>
           </div>
+          {property.suites > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-orange-500/60">{property.suites} S</span>
+            </div>
+          )}
+          {property.parkingSpaces > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-orange-500/60">{property.parkingSpaces} V</span>
+            </div>
+          )}
         </div>
 
         <div className="mt-auto pt-6 border-t border-white/5 flex justify-between items-center">

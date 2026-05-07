@@ -10,12 +10,40 @@ export function ProfileView() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name || !formData.creci) {
+        alert("Nome e CRECI são obrigatórios para registrar seu perfil.");
+        return;
+    }
+    
     setIsSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    updateProfile(formData);
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    
+    try {
+        // Sincroniza com o banco de dados central (Cloud)
+        const response = await fetch('/api/partner/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+            updateProfile(formData);
+            setSaved(true);
+        } else {
+            console.error("Falha na sincronização:", result.error);
+            // Mesmo se falhar a nuvem, salvamos no local do corretor
+            updateProfile(formData);
+            setSaved(true);
+        }
+    } catch (err) {
+        console.error("Erro de conexão ao sincronizar:", err);
+        updateProfile(formData);
+        setSaved(true);
+    } finally {
+        setIsSaving(false);
+        setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
