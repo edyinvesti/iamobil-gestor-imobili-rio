@@ -459,67 +459,76 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1"><Square size={10} /> Área Total</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        className="flex-[2.5] bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
-                                        value={displayArea}
-                                        onChange={handleAreaChange}
-                                        placeholder="0"
-                                    />
-                                    <select
-                                        className="flex-1 bg-black/40 border border-orange-500/20 rounded-2xl px-2 py-5 text-white text-[10px] font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all cursor-pointer text-center uppercase"
-                                        value={formData.sizeUnit}
-                                        onChange={e => setFormData({ ...formData, sizeUnit: e.target.value as AreaUnit })}
-                                    >
-                                        <option value="m²" className="bg-zinc-900 border-none">m²</option>
-                                        <option value="Hectares" className="bg-zinc-900 border-none">Hectares</option>
-                                        <option value="Alqueires" className="bg-zinc-900 border-none">Alqueires</option>
-                                    </select>
-                                </div>
-                                {formData.sizeUnit === 'Alqueires' && (
-                                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-wider pl-1 italic mt-2 animate-pulse">
-                                        * Padrão Alqueire Goiano: 4,84 Hectares (48.400 m²)
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
-                                    <Bed size={10} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Sedes / Casas' : 'Quartos'}
-                                </label>
+                        {/* Área Total - full width */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
+                                <Square size={10} /> Área Total
+                            </label>
+                            <div className="flex gap-3">
                                 <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
-                                    value={formData.bedrooms || ''}
-                                    onChange={e => setFormData({ ...formData, bedrooms: Math.max(0, Number(e.target.value)) })}
-                                    placeholder={(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Qtd. de sedes' : '0'}
+                                    type="text"
+                                    inputMode="numeric"
+                                    className="flex-1 bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-2xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
+                                    value={displayArea}
+                                    onChange={handleAreaChange}
+                                    placeholder="0"
                                 />
+                                <div className="flex flex-col gap-1">
+                                    {(['m²', 'Hectares', 'Alqueires'] as AreaUnit[]).map(unit => (
+                                        <button
+                                            key={unit}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, sizeUnit: unit })}
+                                            className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${formData.sizeUnit === unit ? 'bg-orange-500 border-orange-500 text-white' : 'bg-black/40 border-white/10 text-gray-500 hover:border-orange-500/40 hover:text-white'}`}
+                                        >
+                                            {unit}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+                            {formData.sizeUnit === 'Alqueires' && (
+                                <p className="text-[8px] text-gray-600 font-bold uppercase tracking-wider pl-1 italic">
+                                    * Alqueire Goiano = 4,84 Hectares (48.400 m²)
+                                </p>
+                            )}
+                            {(formData.type === 'Fazenda' || formData.type === 'Chácara') && formData.size > 0 && formData.price > 0 && (
+                                <p className="text-[9px] text-emerald-500/80 font-black uppercase tracking-widest pl-1">
+                                    ≈ R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(formData.price / formData.size)} por {formData.sizeUnit}
+                                </p>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {/* Grid de specs: Quartos/Sedes + Suítes + Banheiros + Salas/Currais + Cozinhas/Represas */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
+                                    <Bed size={9} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Sedes / Casas' : 'Quartos'}
+                                </label>
+                                <input
+                                    type="number" min="0"
+                                    className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
+                                    value={formData.bedrooms || ''}
+                                    onChange={e => setFormData({ ...formData, bedrooms: Math.max(0, Number(e.target.value)) })}
+                                    placeholder="0"
+                                />
+                            </div>
                             <div className="space-y-2">
                                 <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">Suítes</label>
                                 <input
-                                    type="number"
+                                    type="number" min="0"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                     value={formData.suites || ''}
-                                    onChange={e => setFormData({ ...formData, suites: Number(e.target.value) })}
+                                    onChange={e => setFormData({ ...formData, suites: Math.max(0, Number(e.target.value)) })}
                                     placeholder="0"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1">Banheiros</label>
                                 <input
-                                    type="number"
+                                    type="number" min="0"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                     value={formData.bathrooms || ''}
-                                    onChange={e => setFormData({ ...formData, bathrooms: Number(e.target.value) })}
+                                    onChange={e => setFormData({ ...formData, bathrooms: Math.max(0, Number(e.target.value)) })}
                                     placeholder="0"
                                 />
                             </div>
@@ -528,10 +537,10 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Currais' : 'Salas'}
                                 </label>
                                 <input
-                                    type="number"
+                                    type="number" min="0"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                     value={formData.livingRooms || ''}
-                                    onChange={e => setFormData({ ...formData, livingRooms: Number(e.target.value) })}
+                                    onChange={e => setFormData({ ...formData, livingRooms: Math.max(0, Number(e.target.value)) })}
                                     placeholder="0"
                                 />
                             </div>
@@ -540,26 +549,25 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
                                     {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Represas' : 'Cozinhas'}
                                 </label>
                                 <input
-                                    type="number"
+                                    type="number" min="0"
                                     className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
                                     value={formData.kitchens || ''}
-                                    onChange={e => setFormData({ ...formData, kitchens: Number(e.target.value) })}
+                                    onChange={e => setFormData({ ...formData, kitchens: Math.max(0, Number(e.target.value)) })}
                                     placeholder="0"
                                 />
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
-                                <Car size={10} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Vagas / Galpões' : 'Vagas de Garagem'}
-                            </label>
-                            <input
-                                type="number"
-                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-5 text-white text-xl font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
-                                value={formData.parkingSpaces || ''}
-                                onChange={e => setFormData({ ...formData, parkingSpaces: Number(e.target.value) })}
-                                placeholder="0"
-                            />
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-gray-600 tracking-widest pl-1 flex items-center gap-1">
+                                    <Car size={9} /> {(formData.type === 'Fazenda' || formData.type === 'Chácara') ? 'Galpões' : 'Garagem'}
+                                </label>
+                                <input
+                                    type="number" min="0"
+                                    className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-white text-sm font-black outline-none focus:ring-1 focus:ring-orange-500 transition-all text-center"
+                                    value={formData.parkingSpaces || ''}
+                                    onChange={e => setFormData({ ...formData, parkingSpaces: Math.max(0, Number(e.target.value)) })}
+                                    placeholder="0"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
