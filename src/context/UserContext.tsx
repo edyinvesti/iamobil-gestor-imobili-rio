@@ -64,7 +64,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [profile.creci, profile.name, profile.phone]);
 
   const syncToCloud = async (userData: UserProfile) => {
-    if (!userData.creci || !userData.name) return;
+    if (!userData.creci || !userData.name || userData.name === 'Buscando perfil...') return;
     
     try {
       await fetch(`${API_URL}/api/partner/register`, {
