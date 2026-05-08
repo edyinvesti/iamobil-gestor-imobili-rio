@@ -15,16 +15,22 @@ export function ProfileView() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.creci) {
-        alert("Nome e CRECI são obrigatórios para registrar seu perfil.");
+    if (!formData.creci) {
+        alert("O campo CRECI é obrigatório para acessar sua conta.");
         return;
     }
+    
+    // Se o nome não for preenchido, podemos deixar o sistema buscar na nuvem
+    const finalData = {
+      ...formData,
+      name: formData.name || 'Buscando perfil...'
+    };
     
     setIsSaving(true);
     
     try {
         // Agora o updateProfile do Context cuida da sincronização com a nuvem
-        updateProfile(formData);
+        updateProfile(finalData);
         setSaved(true);
     } catch (err) {
         console.error("Erro ao salvar perfil:", err);
