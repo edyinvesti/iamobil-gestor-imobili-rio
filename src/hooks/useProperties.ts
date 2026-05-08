@@ -135,8 +135,24 @@ export function useProperties() {
   }, [properties, saveProperties]);
 
   const deleteProperty = useCallback((id: string) => {
+    const propertyToDelete = properties.find(p => p.id === id);
     const updated = properties.filter(p => p.id !== id);
     saveProperties(updated);
+
+    // Cloud sync for deletion
+    if (propertyToDelete && (propertyToDelete.remoteId || propertyToDelete.id.startsWith('prop_'))) {
+      (async () => {
+        const API_BASE = getApiUrl();
+        try {
+          const targetId = propertyToDelete.remoteId || propertyToDelete.id;
+          await fetch(`${API_BASE}/api/partner/properties?id=${targetId}`, {
+            method: "DELETE"
+          });
+        } catch (e) {
+          console.error("Erro ao deletar da nuvem:", e);
+        }
+      })();
+    }
   }, [properties, saveProperties]);
 
   // Polling for statuses
