@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Bed, Square, Sofa, Utensils, Bath, MapPin, Calendar, Info, CheckCircle2, Car, Maximize2, Share2, Printer, Zap, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Property, UserProfile } from '../types';
+import { resolveImageUrl } from '../utils';
 
 interface PropertyDetailsProps {
     property: Property;
@@ -48,8 +49,8 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property: init
                     {property.images.length > 0 ? (
                         <div className="flex h-[40vh] md:h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                             {property.images.map((img, i) => (
-                                <div key={i} className="relative h-full w-full flex-shrink-0 snap-center group cursor-zoom-in" onClick={() => setZoomedImage(img)}>
-                                    <img src={img} className="h-full w-full object-cover" alt="" />
+                                <div key={i} className="relative h-full w-full flex-shrink-0 snap-center group cursor-zoom-in" onClick={() => setZoomedImage(resolveImageUrl(img))}>
+                                    <img src={resolveImageUrl(img)} className="h-full w-full object-cover" alt="" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
                                 </div>
                             ))}

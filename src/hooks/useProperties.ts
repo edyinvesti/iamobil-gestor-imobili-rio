@@ -1,5 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Property } from '../types';
+import { getApiUrl } from '../utils';
+
+/** Normalizes property data coming from the backend to match the frontend Property type. */
+function normalizeProperty(p: any): Property {
+  return {
+    ...p,
+    // Backend stores area as 'area', frontend expects 'size'
+    size: p.size ?? p.area ?? 0,
+    // Backend stores address as 'location', frontend expects 'address'
+    address: p.address ?? p.location ?? '',
+    // Ensure images is always an array
+    images: Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? (() => { try { return JSON.parse(p.images); } catch { return []; } })() : []),
+    amenities: Array.isArray(p.amenities) ? p.amenities : [],
+  } as Property;
+}
 
 export function useProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -33,15 +48,14 @@ export function useProperties() {
          return;
       }
 
-      // @ts-ignore
-      const API_BASE = (import.meta as any).env.VITE_API_URL || '';
+      const API_BASE = getApiUrl();
       try {
         const res = await fetch(`${API_BASE}/api/partner/properties?creci=${encodeURIComponent(creci)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.properties) {
             // Merge logic: properties from Cloud supersede local, but we keep local-only items (drafts)
-            const cloudItems = Array.isArray(data.properties) ? data.properties : [];
+            const cloudItems = Array.isArray(data.properties) ? data.properties.map(normalizeProperty) : [];
             const cloudIds = new Set(cloudItems.map((p: Property) => p.id));
             const merged = [...cloudItems];
             
@@ -93,8 +107,7 @@ export function useProperties() {
     
     // Non-blocking background sync
     (async () => {
-        // @ts-ignore
-        const API_BASE = (import.meta as any).env.VITE_API_URL || '';
+        const API_BASE = getApiUrl();
         try {
           const response = await fetch(`${API_BASE}/api/partner/properties`, {
             method: "POST",
@@ -135,8 +148,7 @@ export function useProperties() {
 
       if (pendingIds.length === 0) return;
 
-      // @ts-ignore
-      const API_BASE = (import.meta as any).env.VITE_API_URL || '';
+      const API_BASE = getApiUrl();
       try {
         const res = await fetch(`${API_BASE}/api/partner/properties/status?ids=${pendingIds.join(',')}`);
         if (res.ok) {

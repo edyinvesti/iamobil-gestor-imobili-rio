@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Trash2, Edit2, Square, Bed, ArrowRight } from 'lucide-react';
 import { Property } from '../types';
+import { resolveImageUrl } from '../utils';
 
 interface PropertyCardProps {
   property: Property;
@@ -22,7 +23,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, o
       <div className="relative h-56 overflow-hidden">
         {property.images[0] ? (
           <img 
-            src={property.images[0]} 
+            src={resolveImageUrl(property.images[0])} 
             alt={property.title}
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
           />

@@ -8,6 +8,11 @@ export function ProfileView() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
 
+  // Mantém os campos do formulário atualizados se o perfil mudar (sincronização via nuvem no Context)
+  React.useEffect(() => {
+    setFormData(profile);
+  }, [profile]);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.creci) {
@@ -18,28 +23,11 @@ export function ProfileView() {
     setIsSaving(true);
     
     try {
-        // Sincroniza com o banco de dados central (Cloud)
-        const response = await fetch('/api/partner/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.ok) {
-            updateProfile(formData);
-            setSaved(true);
-        } else {
-            console.error("Falha na sincronização:", result.error);
-            // Mesmo se falhar a nuvem, salvamos no local do corretor
-            updateProfile(formData);
-            setSaved(true);
-        }
-    } catch (err) {
-        console.error("Erro de conexão ao sincronizar:", err);
+        // Agora o updateProfile do Context cuida da sincronização com a nuvem
         updateProfile(formData);
         setSaved(true);
+    } catch (err) {
+        console.error("Erro ao salvar perfil:", err);
     } finally {
         setIsSaving(false);
         setTimeout(() => setSaved(false), 2000);
