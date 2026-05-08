@@ -30,9 +30,9 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
   const [category, setCategory] = React.useState('all');
 
   const filteredProperties = properties.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || 
-                          p.address.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = category === 'all' || p.type === category;
+    const matchesSearch = (p.title || '').toLowerCase().includes(search.toLowerCase()) || 
+                          (p.address || '').toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = category === 'all' || (p.type || '').trim().toLowerCase() === category.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
