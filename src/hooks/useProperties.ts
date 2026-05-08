@@ -62,7 +62,14 @@ export function useProperties() {
           const data = await res.json();
           if (data.success && data.properties) {
             // Merge logic: properties from Cloud supersede local, but we keep local-only items (drafts)
-            const cloudItems = Array.isArray(data.properties) ? data.properties.map(normalizeProperty) : [];
+            // Also filter out items that were deleted locally
+            const deletedIds = new Set<string>(JSON.parse(localStorage.getItem('iamobil_deleted_ids') || '[]'));
+            const cloudItems = Array.isArray(data.properties)
+              ? data.properties
+                  .filter((p: any) => !deletedIds.has(p.id))
+                  .map(normalizeProperty)
+              : [];
+
             const cloudIds = new Set(cloudItems.map((p: Property) => p.id));
             const merged = [...cloudItems];
             
@@ -145,6 +152,13 @@ export function useProperties() {
     const propertyToDelete = properties.find(p => p.id === id);
     const updated = properties.filter(p => p.id !== id);
     saveProperties(updated);
+
+    // Persist deleted ID so cloud sync doesn't re-import it
+    const deletedIds: string[] = JSON.parse(localStorage.getItem('iamobil_deleted_ids') || '[]');
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      localStorage.setItem('iamobil_deleted_ids', JSON.stringify(deletedIds));
+    }
 
     // Cloud sync for deletion
     if (propertyToDelete && (propertyToDelete.remoteId || propertyToDelete.id.startsWith('prop_'))) {
