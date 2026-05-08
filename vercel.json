@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://iamobil-cloud.onrender.com/api/$1"
+      "destination": "https://iamobil-cloud-1.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
