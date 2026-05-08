@@ -10,8 +10,15 @@ function normalizeProperty(p: any): Property {
     size: p.size ?? p.area ?? 0,
     // Backend stores address as 'location', frontend expects 'address'
     address: p.address ?? p.location ?? '',
-    // Ensure images is always an array
-    images: Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? (() => { try { return JSON.parse(p.images); } catch { return []; } })() : []),
+    // Ensure images is always an array; fall back to imagePath if empty
+    images: (() => {
+      let imgs: string[] = [];
+      if (Array.isArray(p.images)) imgs = p.images;
+      else if (typeof p.images === 'string') { try { imgs = JSON.parse(p.images); } catch { imgs = []; } }
+      // If still empty, use imagePath as the cover image
+      if (imgs.length === 0 && p.imagePath) imgs = [p.imagePath];
+      return imgs;
+    })(),
     amenities: Array.isArray(p.amenities) ? p.amenities : [],
   } as Property;
 }
