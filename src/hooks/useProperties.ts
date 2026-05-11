@@ -48,8 +48,10 @@ export function useProperties() {
          return;
       }
       
-      let creci = '';
-      try { creci = JSON.parse(savedProfile).creci; } catch(e){}
+      let profileData: { name: string, creci: string } = { name: '', creci: '' };
+      try { profileData = JSON.parse(savedProfile); } catch(e){}
+      const { creci, name } = profileData;
+
       if (!creci) {
          setLoading(false);
          return;
@@ -61,27 +63,51 @@ export function useProperties() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.properties) {
-            // Merge logic: properties from Cloud supersede local, but we keep local-only items (drafts)
-            // Also filter out items that were deleted locally
             const deletedIds = new Set<string>(JSON.parse(localStorage.getItem('iamobil_deleted_ids') || '[]'));
             const cloudItems = Array.isArray(data.properties)
               ? data.properties
-                  .filter((p: any) => !deletedIds.has(p.id))
+                  .filter((p: any) => !deletedIds.has(p.id) && !(typeof p.id === 'string' && p.id.includes("prop_migrated")))
                   .map(normalizeProperty)
               : [];
 
             const cloudIds = new Set(cloudItems.map((p: Property) => p.id));
+            const cloudRemoteIds = new Set(cloudItems.map((p: Property) => p.remoteId).filter(Boolean));
+            
             const merged = [...cloudItems];
+            const localOnly: Property[] = [];
             
             localProps.forEach(lp => {
               // If not found in cloud, keep it
               if (!cloudIds.has(lp.id) && !cloudIds.has(lp.remoteId || '')) {
                 merged.push(lp);
+                if (!lp.remoteId) localOnly.push(lp);
               }
             });
             
             setProperties(merged);
             localStorage.setItem('iamobil_properties', JSON.stringify(merged));
+
+            // NEW: Automatically sync local-only properties to the Hub
+            if (localOnly.length > 0) {
+              console.log(`[Sync] Encontrados ${localOnly.length} imóveis apenas locais. Sincronizando...`);
+              localOnly.forEach(async (prop) => {
+                try {
+                  const response = await fetch(`${API_BASE}/api/partner/properties`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...prop, brokerName: name, brokerCreci: creci })
+                  });
+                  if (response.ok) {
+                    const result = await response.json();
+                    setProperties(prev => prev.map(p => 
+                      p.id === prop.id ? { ...p, remoteId: result.propertyId, remoteStatus: 'pending' } : p
+                    ));
+                  }
+                } catch (e) {
+                  console.error("Erro ao sincronizar imóvel local:", prop.title, e);
+                }
+              });
+            }
           }
         }
       } catch(e) {
