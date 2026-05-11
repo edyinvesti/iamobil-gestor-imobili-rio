@@ -12,6 +12,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, profile, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Carteira', icon: Home },
+    { id: 'appointments', label: 'Agendamentos', icon: Layout },
     { id: 'form', label: 'Novo Imóvel', icon: PlusSquare },
     { id: 'business-card', label: 'Cartão Digital', icon: CreditCard },
     { id: 'profile', label: 'Configurações', icon: User },

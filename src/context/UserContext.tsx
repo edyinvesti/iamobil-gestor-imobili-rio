@@ -25,7 +25,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const savedProfile = localStorage.getItem('iamobil_profile');
     if (savedProfile) {
       try {
-        setProfile(JSON.parse(savedProfile));
+        const parsed = JSON.parse(savedProfile);
+        if (parsed.name === 'Buscando perfil...') {
+          parsed.name = '';
+        }
+        setProfile(parsed);
       } catch (e) {
         console.error("Erro ao carregar perfil local:", e);
       }
@@ -53,7 +57,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             };
             setProfile(cloudProfile);
             localStorage.setItem('iamobil_profile', JSON.stringify(cloudProfile));
+          } else if (profile.name === 'Buscando perfil...') {
+            const resetProfile = { ...profile, name: '' };
+            setProfile(resetProfile);
+            localStorage.setItem('iamobil_profile', JSON.stringify(resetProfile));
           }
+        } else if (profile.name === 'Buscando perfil...') {
+          const resetProfile = { ...profile, name: '' };
+          setProfile(resetProfile);
+          localStorage.setItem('iamobil_profile', JSON.stringify(resetProfile));
         }
       } catch (error) {
         console.error("[UserContext] Erro ao sincronizar perfil com nuvem:", error);

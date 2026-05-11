@@ -8,9 +8,12 @@ export function ProfileView() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
 
-  // Mantém os campos do formulário atualizados se o perfil mudar (sincronização via nuvem no Context)
+  // Mantém os campos do formulário atualizados se o perfil mudar
   React.useEffect(() => {
-    setFormData(profile);
+    setFormData({
+      ...profile,
+      name: profile.name === 'Buscando perfil...' ? '' : profile.name
+    });
   }, [profile]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -20,10 +23,9 @@ export function ProfileView() {
         return;
     }
     
-    // Se o nome não for preenchido, podemos deixar o sistema buscar na nuvem
     const finalData = {
       ...formData,
-      name: formData.name || 'Buscando perfil...'
+      name: formData.name === 'Buscando perfil...' ? '' : formData.name
     };
     
     setIsSaving(true);

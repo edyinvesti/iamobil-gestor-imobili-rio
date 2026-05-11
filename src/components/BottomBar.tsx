@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Plus, User, Search, CreditCard } from 'lucide-react';
+import { Home, Plus, User, Search, CreditCard, Layout } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BottomBarProps {
@@ -10,7 +10,7 @@ interface BottomBarProps {
 export const BottomBar: React.FC<BottomBarProps> = ({ currentView, onViewChange }) => {
   const tabs = [
     { id: 'dashboard', label: 'Início', icon: Home },
-    { id: 'search', label: 'Busca', icon: Search },
+    { id: 'appointments', label: 'Agenda', icon: Layout },
     { id: 'form', label: 'Add', icon: Plus, primary: true },
     { id: 'business-card', label: 'Cartão', icon: CreditCard },
     { id: 'profile', label: 'Perfil', icon: User },

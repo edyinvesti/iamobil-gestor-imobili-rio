@@ -8,6 +8,7 @@ import { Sidebar } from "./components/Sidebar";
 import { BottomBar } from "./components/BottomBar";
 import { BusinessCard } from "./components/BusinessCard";
 import { ProfileView } from "./components/ProfileView";
+import { Appointments } from "./components/Appointments";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { Bell } from "lucide-react";
 import { useProperties } from "./hooks/useProperties";
@@ -110,6 +111,12 @@ export default function App() {
 
               <Route path="/profile" element={
                 <ProfileView />
+              } />
+
+              <Route path="/appointments" element={
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <Appointments />
+                </motion.div>
               } />
 
               <Route path="/business-card" element={

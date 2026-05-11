@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Trash2, Edit2, Square, Bed, ArrowRight } from 'lucide-react';
+import { MapPin, Trash2, Edit2, Square, Bed, ArrowRight, RefreshCw } from 'lucide-react';
 import { Property } from '../types';
 import { resolveImageUrl } from '../utils';
 
@@ -42,10 +42,15 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, o
             <span className="px-4 py-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-[8px] font-black uppercase text-white tracking-widest">
                 {property.type}
             </span>
-            {property.remoteId && (
+            {property.remoteId ? (
                 <span className="px-4 py-1.5 bg-orange-500 text-white border border-orange-400 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-orange-500/20">
                     <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
                     Hub
+                </span>
+            ) : (
+                <span className="px-4 py-1.5 bg-white/10 text-gray-400 border border-white/5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 backdrop-blur-md">
+                    <RefreshCw size={8} className="animate-spin" />
+                    Local (Syncing...)
                 </span>
             )}
         </div>
