@@ -77,10 +77,13 @@ export function useProperties() {
             const localOnly: Property[] = [];
             
             localProps.forEach(lp => {
-              // If not found in cloud, keep it
-              if (!cloudIds.has(lp.id) && !cloudIds.has(lp.remoteId || '')) {
-                merged.push(lp);
-                if (!lp.remoteId) localOnly.push(lp);
+              // Only keep local-only properties (no remoteId yet)
+              // If it has a remoteId and isn't in cloudItems, it was deleted in the cloud
+              if (!lp.remoteId) {
+                if (!cloudIds.has(lp.id)) {
+                  merged.push(lp);
+                  localOnly.push(lp);
+                }
               }
             });
             
@@ -233,11 +236,18 @@ export function useProperties() {
     return () => clearInterval(interval);
   }, [properties, saveProperties]);
 
+  const forceSync = useCallback(() => {
+    localStorage.removeItem('iamobil_properties');
+    localStorage.removeItem('iamobil_deleted_ids');
+    window.location.reload();
+  }, []);
+
   return {
     properties,
     loading,
     saveProperty: handleSaveProperty,
     deleteProperty,
+    forceSync,
     setProperties: saveProperties
   };
 }

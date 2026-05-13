@@ -12,6 +12,7 @@ interface DashboardProps {
   onPropertyClick: (property: Property) => void;
   onEdit: (property: Property) => void;
   onDelete: (id: string) => void;
+  onSync: () => void;
   loading?: boolean;
 }
 
@@ -25,7 +26,7 @@ const CATEGORIES = [
   { id: 'Comercial', label: 'Comercial', icon: Building },
 ];
 
-export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onDelete, loading }: DashboardProps) {
+export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onDelete, onSync, loading }: DashboardProps) {
   const [search, setSearch] = React.useState('');
   const [category, setCategory] = React.useState('all');
 
@@ -56,11 +57,20 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
   return (
     <div className="p-4 lg:p-8 w-full">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Sua Carteira</h1>
-          <p className="text-gray-500 text-xs mt-1 font-bold uppercase tracking-widest">
-            Total: <span className="text-orange-500">{properties.length}</span> ativos em gestão
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Sua Carteira</h1>
+            <p className="text-gray-500 text-xs mt-1 font-bold uppercase tracking-widest">
+              Total: <span className="text-orange-500">{properties.length}</span> ativos em gestão
+            </p>
+          </div>
+          <button 
+            onClick={onSync}
+            title="Sincronizar com a Nuvem (Limpar Cache)"
+            className="mt-1 h-10 w-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-gray-500 hover:text-orange-500 hover:border-orange-500/30 transition-all group"
+          >
+            <SlidersHorizontal size={18} className="group-active:rotate-180 transition-transform duration-500" />
+          </button>
         </div>
         
         <div className="flex items-center gap-3">

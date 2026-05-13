@@ -18,7 +18,7 @@ import { Property } from "./types";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const { properties, saveProperty, deleteProperty, loading } = useProperties();
+  const { properties, saveProperty, deleteProperty, forceSync, loading } = useProperties();
   const { profile, updateProfile, logout } = useUser();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
@@ -94,6 +94,7 @@ export default function App() {
                     onPropertyClick={(p) => { setSelectedProperty(p); navigate('/details'); }}
                     onDelete={setPropertyToDelete}
                     onEdit={(p) => { setSelectedProperty(p); navigate('/form'); }}
+                    onSync={forceSync}
                     loading={loading}
                   />
                 </motion.div>
