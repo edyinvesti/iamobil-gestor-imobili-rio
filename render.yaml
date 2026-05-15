@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: node server/index.js
+    startCommand: node server/index.cjs
     envVars:
       - key: NODE_VERSION
         value: 18.17.0
