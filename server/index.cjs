@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log('=== INICIANDO SERVIDOR EXPRESS ===');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
