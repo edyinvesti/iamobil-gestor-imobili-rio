@@ -19,3 +19,6 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         value: 8766470825:AAEg6tUojiHHF6KCr4TPg-DQzxSMz72lvFU
         sync: false
+      - key: NODE_ENV
+        value: production
+        sync: false
