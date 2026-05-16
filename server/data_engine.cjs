@@ -1,87 +1,101 @@
-const Database = require('better-sqlite3');
+const { createClient } = require('@libsql/client');
 const path = require('path');
 
-const dbPath = process.env.DATABASE_URL || path.join(__dirname, '../data/iamobil.db');
+const dbPath = process.env.DATABASE_URL || 'file:' + path.join(__dirname, '../data/iamobil.db');
 
-let db;
+let client;
 
 try {
-  db = new Database(dbPath);
+  client = createClient({ 
+    url: dbPath,
+    authToken: process.env.LIBSQL_AUTH_TOKEN || ''
+  });
   initializeTables();
 } catch (e) {
-  console.log('Banco local não disponível, usando modo apenas memória');
-  db = null;
+  console.log('Banco local não disponível, usando modo apenas memória:', e.message);
+  client = null;
 }
 
-function initializeTables() {
-  if (!db) return;
+async function initializeTables() {
+  if (!client) return;
   
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS leads (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      phone TEXT,
-      email TEXT,
-      source TEXT,
-      status TEXT DEFAULT 'new',
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS properties (
-      id TEXT PRIMARY KEY,
-      title TEXT,
-      price REAL,
-      address TEXT,
-      status TEXT DEFAULT 'available',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS appointments (
-      id TEXT PRIMARY KEY,
-      lead_id TEXT,
-      property_id TEXT,
-      date DATETIME,
-      status TEXT DEFAULT 'scheduled',
-      notes TEXT,
-      FOREIGN KEY(lead_id) REFERENCES leads(id),
-      FOREIGN KEY(property_id) REFERENCES properties(id)
-    );
-  `);
+  try {
+    await client.batch([
+      `CREATE TABLE IF NOT EXISTS leads (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        phone TEXT,
+        email TEXT,
+        source TEXT,
+        status TEXT DEFAULT 'new',
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      `CREATE TABLE IF NOT EXISTS properties (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        price REAL,
+        address TEXT,
+        status TEXT DEFAULT 'available',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      `CREATE TABLE IF NOT EXISTS appointments (
+        id TEXT PRIMARY KEY,
+        lead_id TEXT,
+        property_id TEXT,
+        date DATETIME,
+        status TEXT DEFAULT 'scheduled',
+        notes TEXT,
+        FOREIGN KEY(lead_id) REFERENCES leads(id),
+        FOREIGN KEY(property_id) REFERENCES properties(id)
+      )`
+    ], "write");
+  } catch (e) {
+    console.error('Erro ao inicializar tabelas:', e.message);
+  }
 }
 
 class DataEngine {
-  addLead(lead) {
-    if (!db) return null;
-    const stmt = db.prepare('INSERT INTO leads (id, name, phone, email, source, status) VALUES (?, ?, ?, ?, ?, ?)');
-    return stmt.run(lead.id, lead.name, lead.phone, lead.email, lead.source, lead.status || 'new');
+  async addLead(lead) {
+    if (!client) return null;
+    return await client.execute({
+      sql: 'INSERT INTO leads (id, name, phone, email, source, status) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [lead.id, lead.name, lead.phone, lead.email, lead.source, lead.status || 'new']
+    });
   }
 
-  getLeads() {
-    if (!db) return [];
-    return db.prepare('SELECT * FROM leads ORDER BY created_at DESC').all();
+  async getLeads() {
+    if (!client) return [];
+    const rs = await client.execute('SELECT * FROM leads ORDER BY created_at DESC');
+    return rs.rows;
   }
 
-  addProperty(property) {
-    if (!db) return null;
-    const stmt = db.prepare('INSERT INTO properties (id, title, price, address, status) VALUES (?, ?, ?, ?, ?)');
-    return stmt.run(property.id, property.title, property.price, property.address, property.status || 'available');
+  async addProperty(property) {
+    if (!client) return null;
+    return await client.execute({
+      sql: 'INSERT INTO properties (id, title, price, address, status) VALUES (?, ?, ?, ?, ?)',
+      args: [property.id, property.title, property.price, property.address, property.status || 'available']
+    });
   }
 
-  getProperties() {
-    if (!db) return [];
-    return db.prepare('SELECT * FROM properties ORDER BY created_at DESC').all();
+  async getProperties() {
+    if (!client) return [];
+    const rs = await client.execute('SELECT * FROM properties ORDER BY created_at DESC');
+    return rs.rows;
   }
 
-  addAppointment(appointment) {
-    if (!db) return null;
-    const stmt = db.prepare('INSERT INTO appointments (id, lead_id, property_id, date, status, notes) VALUES (?, ?, ?, ?, ?, ?)');
-    return stmt.run(appointment.id, appointment.leadId, appointment.propertyId, appointment.date, appointment.status || 'scheduled', appointment.notes);
+  async addAppointment(appointment) {
+    if (!client) return null;
+    return await client.execute({
+      sql: 'INSERT INTO appointments (id, lead_id, property_id, date, status, notes) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [appointment.id, appointment.leadId, appointment.propertyId, appointment.date, appointment.status || 'scheduled', appointment.notes]
+    });
   }
 
-  getAppointments() {
-    if (!db) return [];
-    return db.prepare('SELECT * FROM appointments ORDER BY date ASC').all();
+  async getAppointments() {
+    if (!client) return [];
+    const rs = await client.execute('SELECT * FROM appointments ORDER BY date ASC');
+    return rs.rows;
   }
 }
 

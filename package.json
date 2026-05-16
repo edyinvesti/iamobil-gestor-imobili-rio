@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "dev:all": "concurrently \"npm run dev\" \"node server/index.cjs\"",
     "build": "vite build",
-    "start": "node server/index.js",
-    "start:prod": "npm run build && node server/index.js",
+    "start": "node server/index.cjs",
+    "start:prod": "npm run build && node server/index.cjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",

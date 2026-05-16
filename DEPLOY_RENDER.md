@@ -29,10 +29,10 @@ git push origin main
 
 O Render detectará automaticamente o arquivo `render.yaml`. Verifique as configurações:
 
-- **Name**: `iamobil-gestor`
+- **Name**: `iamobil-gestor-imobili-rio`
 - **Runtime**: Node
 - **Build Command**: `npm install && npm run build`
-- **Start Command**: `npx vite preview --host 0.0.0.0 --port $PORT`
+- **Start Command**: `node server/index.cjs`
 - **Plan**: Free (ou escolha outro plano)
 
 ### 4. Configurar Variáveis de Ambiente
@@ -42,8 +42,9 @@ Na seção **Environment**, adicione:
 | Variável | Valor | Descrição |
 |----------|-------|-----------|
 | `GEMINI_API_KEY` | `sua-chave-api` | Chave da API do Google Gemini |
-| `VITE_API_URL` | `https://seu-backend.onrender.com` | URL do backend (se houver) |
-| `NODE_VERSION` | `18.17.0` | Versão do Node.js |
+| `VITE_API_URL` | `https://iamobil-gestor-imobili-rio.onrender.com` | URL do seu sistema |
+| `DATABASE_URL` | `libsql://sua-url-turso` | URL do banco de dados (ex: Turso) |
+| `NODE_VERSION` | `20.x` | Versão do Node.js |
 
 ⚠️ **Importante**: Não compartilhe suas chaves de API publicamente!
 

@@ -6,9 +6,12 @@ const path = require('path');
 const { HermesGateway } = require('./hermes-gateway-adapter.cjs');
 
 let DataEngine;
+let dataEngineInstance;
+
 try {
   const de = require('./data_engine.cjs');
-  DataEngine = new de.DataEngine();
+  dataEngineInstance = new de.DataEngine();
+  DataEngine = dataEngineInstance;
 } catch (e) {
   console.log('DataEngine não disponível:', e.message);
   DataEngine = null;
@@ -96,16 +99,31 @@ app.get('/api/hermes/status', (req, res) => {
 
 // DataEngine endpoints
 if (DataEngine) {
-  app.get('/api/leads', (req, res) => {
-    res.json({ success: true, leads: DataEngine.getLeads() });
+  app.get('/api/leads', async (req, res) => {
+    try {
+      const leads = await DataEngine.getLeads();
+      res.json({ success: true, leads });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
   
-  app.get('/api/properties', (req, res) => {
-    res.json({ success: true, properties: DataEngine.getProperties() });
+  app.get('/api/properties', async (req, res) => {
+    try {
+      const properties = await DataEngine.getProperties();
+      res.json({ success: true, properties });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
   
-  app.get('/api/appointments', (req, res) => {
-    res.json({ success: true, appointments: DataEngine.getAppointments() });
+  app.get('/api/appointments', async (req, res) => {
+    try {
+      const appointments = await DataEngine.getAppointments();
+      res.json({ success: true, appointments });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
 }
 

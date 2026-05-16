@@ -1,20 +1,20 @@
 services:
   - type: web
-    name: iamobil-gestor
+    name: iamobil-gestor-imobili-rio
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
     startCommand: node server/index.cjs
     envVars:
       - key: NODE_VERSION
-        value: 18.17.0
+        value: 20.x
       - key: PORT
         value: 10000
         sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: VITE_API_URL
-        value: https://iamobil-cloud-1.onrender.com
+        value: https://iamobil-gestor-imobili-rio.onrender.com
         sync: false
       - key: TELEGRAM_BOT_TOKEN
         value: 8766470825:AAEg6tUojiHHF6KCr4TPg-DQzxSMz72lvFU
