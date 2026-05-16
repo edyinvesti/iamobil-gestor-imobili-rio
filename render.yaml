@@ -8,6 +8,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.17.0
+      - key: PORT
+        value: 10000
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: VITE_API_URL
