@@ -24,6 +24,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../dist')));
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+console.log('GEMINI_API_KEY loaded:', GEMINI_API_KEY ? 'YES' : 'NO');
 const hermes = new HermesGateway();
 
 async function sendTelegramMessage(chatId, text) {
@@ -48,29 +49,48 @@ app.post('/api/telegram/webhook', async (req, res) => {
       const chatId = update.message.chat.id;
       const text = update.message.text;
       
-      console.log(`Mensagem recebida: ${text}`);
+      console.log(`Mensagem recebida: ${text} de chat ${chatId}`);
+      
+      if (!GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY não configurado!');
+        await sendTelegramMessage(chatId, 'Erro: IA não configurada.');
+        return res.send('OK');
+      }
       
       const reply = await processWithAI(text);
+      console.log('Resposta gerada:', reply.slice(0, 100));
+      
       await sendTelegramMessage(chatId, reply);
+      console.log('Mensagem enviada com sucesso');
     }
     
     res.send('OK');
   } catch (e) {
     console.error('Erro no webhook:', e);
-    res.status(500).send('Erro');
+    res.status(500).json({ error: e.message });
   }
 });
 
 app.get('/api/telegram/status', (req, res) => {
-  res.json({ 
-    status: 'online', 
-    bot_token_configured: !!TELEGRAM_BOT_TOKEN,
-    gemini_configured: !!GEMINI_API_KEY 
-  });
+  try {
+    res.json({ 
+      status: 'online', 
+      bot_token_configured: !!TELEGRAM_BOT_TOKEN,
+      gemini_configured: !!GEMINI_API_KEY 
+    });
+  } catch(e) {
+    console.error('Erro /api/telegram/status:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/hermes/status', (req, res) => {
-  res.json(hermes.getStatus());
+  try {
+    res.json(hermes.getStatus());
+  } catch(e) {
+    console.error('Erro /api/hermes/status:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // DataEngine endpoints
