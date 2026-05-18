@@ -10,7 +10,8 @@ interface BusinessCardProps {
 export const BusinessCard: React.FC<BusinessCardProps> = ({ profile }) => {
     const handleConnect = () => {
         const text = `Olá ${profile.name}, vim através do seu Cartão Digital IAmobil e gostaria de conversar!`;
-        const url = `https://wa.me/${profile.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
+        const phone = profile.phone?.replace(/\D/g, '') || '';
+        const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : 'https://wa.me/';
         window.open(url, '_blank');
     };
 

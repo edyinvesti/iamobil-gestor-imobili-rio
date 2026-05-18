@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Home, PlusSquare, User, CreditCard, Layout, LogOut, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -17,6 +17,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, pro
     { id: 'business-card', label: 'Cartão Digital', icon: CreditCard },
     { id: 'profile', label: 'Configurações', icon: User },
   ];
+
+  const initials = useMemo(() => {
+    return (profile.name || 'E').substring(0, 2).toUpperCase();
+  }, [profile.name]);
 
   return (
     <aside className="hidden lg:flex flex-col w-64 lg:w-72 h-screen sticky top-0 glass-dark border-r border-white/5 p-4 z-50">
@@ -63,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, pro
                 {profile.photo ? (
                   <img src={profile.photo} className="w-full h-full object-cover" alt="" />
                 ) : (
-                  <span className="text-orange-500 font-black text-xs">{profile.name.substring(0, 2).toUpperCase()}</span>
+                  <span className="text-orange-500 font-black text-xs">{initials}</span>
                 )}
               </div>
             </div>

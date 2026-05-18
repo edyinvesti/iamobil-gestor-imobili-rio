@@ -1,10 +1,11 @@
 import React from "react";
-import { Search, Filter, SlidersHorizontal, House, Building2, LandPlot, Building, Trees, Sprout } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, House, Building2, LandPlot, Building, Trees, Sprout, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { Property } from "../types";
 import { PropertyCard } from "./PropertyCard";
 import { SkeletonCard } from "./SkeletonCard";
 import { EmptyPortfolio } from "./EmptyPortfolio";
 import { motion, AnimatePresence } from "framer-motion";
+import { SyncStatus } from "../hooks/useProperties";
 
 interface DashboardProps {
   properties: Property[];
@@ -14,6 +15,7 @@ interface DashboardProps {
   onDelete: (id: string) => void;
   onSync: () => void;
   loading?: boolean;
+  syncStatus?: SyncStatus;
 }
 
 const CATEGORIES = [
@@ -26,7 +28,15 @@ const CATEGORIES = [
   { id: 'Comercial', label: 'Comercial', icon: Building },
 ];
 
-export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onDelete, onSync, loading }: DashboardProps) {
+function formatLastSync(timestamp: number | null): string {
+  if (!timestamp) return 'Nunca';
+  const diff = Date.now() - timestamp;
+  if (diff < 60000) return 'Agora';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m atrás`;
+  return `${Math.floor(diff / 3600000)}h atrás`;
+}
+
+export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onDelete, onSync, loading, syncStatus }: DashboardProps) {
   const [search, setSearch] = React.useState('');
   const [category, setCategory] = React.useState('all');
 
@@ -64,13 +74,33 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
               Total: <span className="text-orange-500">{properties.length}</span> ativos em gestão
             </p>
           </div>
-          <button 
-            onClick={onSync}
-            title="Sincronizar com a Nuvem (Limpar Cache)"
-            className="mt-1 h-10 w-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-gray-500 hover:text-orange-500 hover:border-orange-500/30 transition-all group"
-          >
-            <SlidersHorizontal size={18} className="group-active:rotate-180 transition-transform duration-500" />
-          </button>
+          
+          <div className="flex items-center gap-2 mt-1">
+            {syncStatus?.syncing ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <RefreshCw size={14} className="text-blue-400 animate-spin" />
+                <span className="text-[10px] font-bold text-blue-400 uppercase">Sincronizando</span>
+              </div>
+            ) : syncStatus?.error ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <AlertCircle size={14} className="text-red-400" />
+                <span className="text-[10px] font-bold text-red-400 uppercase">{syncStatus.error}</span>
+              </div>
+            ) : syncStatus?.lastSync ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase">Sincronizado {formatLastSync(syncStatus.lastSync)}</span>
+              </div>
+            ) : null}
+            
+            <button 
+              onClick={onSync}
+              title="Sincronizar com a Nuvem"
+              className="h-10 w-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-gray-500 hover:text-orange-500 hover:border-orange-500/30 transition-all group"
+            >
+              <SlidersHorizontal size={18} className="group-active:rotate-180 transition-transform duration-500" />
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -90,7 +120,6 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
         </div>
       </header>
 
-      {/* Categories Filter */}
       <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-hide">
         {CATEGORIES.map(cat => (
             <button
@@ -169,4 +198,3 @@ export function Dashboard({ properties, onAddClick, onPropertyClick, onEdit, onD
     </div>
   );
 }
-

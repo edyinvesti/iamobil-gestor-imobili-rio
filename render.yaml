@@ -17,7 +17,7 @@ services:
         value: https://iamobil-gestor-imobili-rio.onrender.com
         sync: false
       - key: TELEGRAM_BOT_TOKEN
-        value: 8766470825:AAEg6tUojiHHF6KCr4TPg-DQzxSMz72lvFU
+        value: "YOUR_TELEGRAM_BOT_TOKEN_HERE"
         sync: false
       - key: NODE_ENV
         value: production

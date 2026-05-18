@@ -1,7 +1,15 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 export function useSplashScreenAudio() {
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close();
+      }
+    };
+  }, []);
 
   const initAudio = () => {
     if (audioCtxRef.current) {

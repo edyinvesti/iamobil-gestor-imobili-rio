@@ -21,11 +21,12 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick, o
     >
       {/* Glossy Image Container */}
       <div className="relative h-56 overflow-hidden">
-        {property.images[0] ? (
+        {property.images?.length ? (
           <img 
             src={resolveImageUrl(property.images[0])} 
             alt={property.title}
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            onError={(e) => { (e.target as HTMLImageElement).src = ''; }}
           />
         ) : (
           <div className="w-full h-full bg-white/5 flex items-center justify-center">

@@ -125,13 +125,16 @@ export const Appointments: React.FC = () => {
                  </div>
               </div>
 
-              <div className="flex gap-4">
-                 <button 
-                    onClick={() => window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}`, '_blank')}
-                    className="flex-1 bg-white text-black hover:bg-emerald-500 hover:text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex justify-center items-center gap-2 transition-all duration-300 transform active:scale-95 shadow-lg"
-                 >
-                    <Phone size={14} /> Falar no WhatsApp
-                 </button>
+<div className="flex gap-4">
+                  <button 
+                     onClick={() => {
+                        const phone = lead.phone?.replace(/\D/g, '') || '';
+                        if (phone) window.open(`https://wa.me/${phone}`, '_blank');
+                     }}
+                     className="flex-1 bg-white text-black hover:bg-emerald-500 hover:text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex justify-center items-center gap-2 transition-all duration-300 transform active:scale-95 shadow-lg"
+                  >
+                     <Phone size={14} /> Falar no WhatsApp
+                  </button>
                  <button className="w-14 flex justify-center items-center bg-white/5 hover:bg-orange-500/20 text-gray-400 hover:text-orange-500 rounded-2xl transition-all duration-300 border border-white/5">
                     <CheckCircle2 size={18} />
                  </button>

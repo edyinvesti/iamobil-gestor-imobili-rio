@@ -9,7 +9,10 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://iamobil-cloud-1.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  console.warn('VITE_API_URL not configured');
+}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>({
@@ -20,7 +23,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     phone: ''
   });
 
-  // Carregar do LocalStorage inicialmente
   useEffect(() => {
     const savedProfile = localStorage.getItem('iamobil_profile');
     if (savedProfile) {
@@ -36,10 +38,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Sincronizar com a Nuvem se houver um CRECI mas o perfil estiver incompleto
   useEffect(() => {
     const fetchCloudProfile = async () => {
-      if (!profile.creci || (profile.name && profile.phone)) return;
+      if (!API_URL || !profile.creci || (profile.name && profile.phone)) return;
 
       try {
         console.log(`[UserContext] Buscando perfil na nuvem para CRECI: ${profile.creci}`);
@@ -76,7 +77,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [profile.creci, profile.name, profile.phone]);
 
   const syncToCloud = async (userData: UserProfile) => {
-    if (!userData.creci || !userData.name || userData.name === 'Buscando perfil...') return;
+    if (!API_URL || !userData.creci || !userData.name || userData.name === 'Buscando perfil...') return;
     
     try {
       await fetch(`${API_URL}/api/partner/register`, {

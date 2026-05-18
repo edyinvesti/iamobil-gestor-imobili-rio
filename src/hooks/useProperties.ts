@@ -1,21 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Property } from '../types';
 import { getApiUrl } from '../utils';
 
-/** Normalizes property data coming from the backend to match the frontend Property type. */
-function normalizeProperty(p: any): Property {
+interface RawPropertyInput {
+  id?: string;
+  size?: number;
+  area?: number;
+  address?: string;
+  location?: string;
+  images?: string[] | string;
+  imagePath?: string;
+  amenities?: string[];
+  [key: string]: unknown;
+}
+
+function normalizeProperty(p: RawPropertyInput): Property {
   return {
     ...p,
-    // Backend stores area as 'area', frontend expects 'size'
+    id: p.id || crypto.randomUUID(),
     size: p.size ?? p.area ?? 0,
-    // Backend stores address as 'location', frontend expects 'address'
     address: p.address ?? p.location ?? '',
-    // Ensure images is always an array; fall back to imagePath if empty
     images: (() => {
       let imgs: string[] = [];
       if (Array.isArray(p.images)) imgs = p.images;
       else if (typeof p.images === 'string') { try { imgs = JSON.parse(p.images); } catch { imgs = []; } }
-      // If still empty, use imagePath as the cover image
       if (imgs.length === 0 && p.imagePath) imgs = [p.imagePath];
       return imgs;
     })(),
@@ -23,11 +31,23 @@ function normalizeProperty(p: any): Property {
   } as Property;
 }
 
+export interface SyncStatus {
+  syncing: boolean;
+  lastSync: number | null;
+  error: string | null;
+}
+
 export function useProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    syncing: false,
+    lastSync: null,
+    error: null
+  });
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load from localStorage AND Cloud Sync
   useEffect(() => {
     let localProps: Property[] = [];
     const savedProperties = localStorage.getItem('iamobil_properties');
@@ -40,7 +60,6 @@ export function useProperties() {
       }
     }
     
-    // Background cloud sync
     const fetchCloudData = async () => {
       const savedProfile = localStorage.getItem('iamobil_profile');
       if (!savedProfile) {
@@ -57,28 +76,41 @@ export function useProperties() {
          return;
       }
 
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
+      setSyncStatus(prev => ({ ...prev, syncing: true, error: null }));
       const API_BASE = getApiUrl();
+      
+      if (!API_BASE) {
+        setLoading(false);
+        setSyncStatus({ syncing: false, lastSync: null, error: 'API não configurada' });
+        return;
+      }
+      
       try {
-        const res = await fetch(`${API_BASE}/api/partner/properties?creci=${encodeURIComponent(creci)}`);
+        const res = await fetch(`${API_BASE}/api/partner/properties?creci=${encodeURIComponent(creci)}`, {
+          signal: abortControllerRef.current.signal
+        });
+        
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.properties) {
             const deletedIds = new Set<string>(JSON.parse(localStorage.getItem('iamobil_deleted_ids') || '[]'));
             const cloudItems = Array.isArray(data.properties)
               ? data.properties
-                  .filter((p: any) => !deletedIds.has(p.id) && !(typeof p.id === 'string' && p.id.includes("prop_migrated")))
+                  .filter((p: RawPropertyInput) => !deletedIds.has(p.id || '') && !(typeof p.id === 'string' && p.id.includes("prop_migrated")))
                   .map(normalizeProperty)
               : [];
 
             const cloudIds = new Set(cloudItems.map((p: Property) => p.id));
-            const cloudRemoteIds = new Set(cloudItems.map((p: Property) => p.remoteId).filter(Boolean));
             
             const merged = [...cloudItems];
             const localOnly: Property[] = [];
             
             localProps.forEach(lp => {
-              // Only keep local-only properties (no remoteId yet)
-              // If it has a remoteId and isn't in cloudItems, it was deleted in the cloud
               if (!lp.remoteId) {
                 if (!cloudIds.has(lp.id)) {
                   merged.push(lp);
@@ -89,11 +121,11 @@ export function useProperties() {
             
             setProperties(merged);
             localStorage.setItem('iamobil_properties', JSON.stringify(merged));
+            setSyncStatus({ syncing: false, lastSync: Date.now(), error: null });
 
-            // NEW: Automatically sync local-only properties to the Hub
             if (localOnly.length > 0) {
-              console.log(`[Sync] Encontrados ${localOnly.length} imóveis apenas locais. Sincronizando...`);
-              localOnly.forEach(async (prop) => {
+              console.log(`[Sync] Sincronizando ${localOnly.length} imóveis locais...`);
+              for (const prop of localOnly) {
                 try {
                   const response = await fetch(`${API_BASE}/api/partner/properties`, {
                     method: "POST",
@@ -107,14 +139,19 @@ export function useProperties() {
                     ));
                   }
                 } catch (e) {
-                  console.error("Erro ao sincronizar imóvel local:", prop.title, e);
+                  console.error("Erro ao sincronizar imóvel:", prop.title, e);
                 }
-              });
+              }
             }
           }
+        } else {
+          setSyncStatus({ syncing: false, lastSync: null, error: 'Falha ao conectar com a nuvem' });
         }
-      } catch(e) {
-        console.error("Erro ao sincronizar imóveis da nuvem:", e);
+      } catch(e: any) {
+        if (e.name !== 'AbortError') {
+          console.error("Erro ao sincronizar:", e);
+          setSyncStatus({ syncing: false, lastSync: null, error: 'Erro de conexão' });
+        }
       } finally {
         setLoading(false);
       }
@@ -123,34 +160,38 @@ export function useProperties() {
     fetchCloudData();
   }, []);
 
-  // Save properties to localStorage
   const saveProperties = useCallback((newProperties: Property[]) => {
     try {
       setProperties(newProperties);
       localStorage.setItem('iamobil_properties', JSON.stringify(newProperties));
     } catch (e) {
-      console.warn("Storage quota exceeded, saving state only in memory", e);
-      // Fallback: update state anyway so UI works even if storage fails
+      console.warn("Storage quota exceeded", e);
       setProperties(newProperties);
     }
   }, []);
 
   const handleSaveProperty = useCallback(async (property: Property, profile: { name: string, creci: string }) => {
-    const exists = properties.find(p => p.id === property.id);
-    let updated: Property[];
+    setProperties(prev => {
+      const exists = prev.find(p => p.id === property.id);
+      let updated: Property[];
+      if (exists) {
+        updated = prev.map(p => p.id === property.id ? property : p);
+      } else {
+        const newProp: Property = { ...property, remoteStatus: 'pending' };
+        updated = [newProp, ...prev];
+      }
+      return updated;
+    });
     
-    if (exists) {
-      updated = properties.map(p => p.id === property.id ? property : p);
-    } else {
-      const newProp: Property = { ...property, remoteStatus: 'pending' };
-      updated = [newProp, ...properties];
-    }
+    setSyncStatus(prev => ({ ...prev, syncing: true }));
     
-    saveProperties(updated);
-    
-    // Non-blocking background sync
     (async () => {
         const API_BASE = getApiUrl();
+        if (!API_BASE) {
+          setSyncStatus({ syncing: false, lastSync: null, error: 'API não configurada' });
+          return;
+        }
+        
         try {
           const response = await fetch(`${API_BASE}/api/partner/properties`, {
             method: "POST",
@@ -167,32 +208,32 @@ export function useProperties() {
             setProperties(prev => prev.map(p => 
               p.id === property.id ? { ...p, remoteId: data.propertyId, remoteStatus: 'pending' as const } : p
             ));
-            // Trigger storage update with the remote ID
-            const latest = properties.map(p => p.id === property.id ? { ...p, remoteId: data.propertyId } : p);
-            localStorage.setItem('iamobil_properties', JSON.stringify(latest));
+            setSyncStatus({ syncing: false, lastSync: Date.now(), error: null });
+          } else {
+            setSyncStatus({ syncing: false, lastSync: null, error: 'Erro ao salvar na nuvem' });
           }
         } catch (e: any) {
-          console.error("Erro na integração em background:", e);
+          console.error("Erro na integração:", e);
+          setSyncStatus({ syncing: false, lastSync: null, error: 'Erro de conexão' });
         }
     })();
-  }, [properties, saveProperties]);
+  }, []);
 
   const deleteProperty = useCallback((id: string) => {
     const propertyToDelete = properties.find(p => p.id === id);
     const updated = properties.filter(p => p.id !== id);
     saveProperties(updated);
 
-    // Persist deleted ID so cloud sync doesn't re-import it
     const deletedIds: string[] = JSON.parse(localStorage.getItem('iamobil_deleted_ids') || '[]');
     if (!deletedIds.includes(id)) {
       deletedIds.push(id);
       localStorage.setItem('iamobil_deleted_ids', JSON.stringify(deletedIds));
     }
 
-    // Cloud sync for deletion
     if (propertyToDelete && (propertyToDelete.remoteId || propertyToDelete.id.startsWith('prop_'))) {
       (async () => {
         const API_BASE = getApiUrl();
+        if (!API_BASE) return;
         try {
           const targetId = propertyToDelete.remoteId || propertyToDelete.id;
           await fetch(`${API_BASE}/api/partner/properties?id=${targetId}`, {
@@ -205,36 +246,58 @@ export function useProperties() {
     }
   }, [properties, saveProperties]);
 
-  // Polling for statuses
   useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    const pendingIds = properties
+      .filter(p => p.remoteId && p.remoteStatus !== 'approved' && p.remoteStatus !== 'rejected')
+      .map(p => p.remoteId);
+
+    if (pendingIds.length === 0) return;
+
     const checkStatuses = async () => {
-      const pendingIds = properties
-        .filter(p => p.remoteId && p.remoteStatus !== 'approved' && p.remoteStatus !== 'rejected')
-        .map(p => p.remoteId);
-
-      if (pendingIds.length === 0) return;
-
       const API_BASE = getApiUrl();
+      if (!API_BASE) return;
+      
       try {
         const res = await fetch(`${API_BASE}/api/partner/properties/status?ids=${pendingIds.join(',')}`);
         if (res.ok) {
           const { statuses } = await res.json();
-          let changed = false;
-          const updatedProps = properties.map(p => {
-            if (p.remoteId && statuses[p.remoteId] && statuses[p.remoteId] !== p.remoteStatus) {
-              changed = true;
-              return { ...p, remoteStatus: statuses[p.remoteId] };
+          setProperties(prev => {
+            let changed = false;
+            const updated = prev.map(p => {
+              if (p.remoteId && statuses[p.remoteId] && statuses[p.remoteId] !== p.remoteStatus) {
+                changed = true;
+                return { ...p, remoteStatus: statuses[p.remoteId] };
+              }
+              return p;
+            });
+            if (changed) {
+              localStorage.setItem('iamobil_properties', JSON.stringify(updated));
             }
-            return p;
+            return updated;
           });
-          if (changed) saveProperties(updatedProps);
         }
       } catch (err) { /* silent */ }
     };
 
-    const interval = setInterval(checkStatuses, 10000);
-    return () => clearInterval(interval);
-  }, [properties, saveProperties]);
+    checkStatuses();
+    intervalRef.current = setInterval(checkStatuses, 60000);
+    
+    const handleVisibility = () => {
+      if (!document.hidden) checkStatuses();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
 
   const forceSync = useCallback(() => {
     localStorage.removeItem('iamobil_properties');
@@ -245,6 +308,7 @@ export function useProperties() {
   return {
     properties,
     loading,
+    syncStatus,
     saveProperty: handleSaveProperty,
     deleteProperty,
     forceSync,

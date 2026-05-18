@@ -1,8 +1,68 @@
 /**
  * Returns the base URL of the backend API.
  */
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  console.warn('VITE_API_URL not configured - some features may not work');
+}
 export function getApiUrl(): string {
-  return import.meta.env.VITE_API_URL || 'https://iamobil-cloud-1.onrender.com';
+  return API_URL || '';
+}
+
+export function compressImage(file: File, maxWidth = 800, quality = 0.6): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        
+        const sizeKB = compressed.length / 1024;
+        if (sizeKB > 500) {
+          return compressImage(file, maxWidth * 0.7, quality - 0.1).then(resolve).catch(reject);
+        }
+        
+        resolve(compressed);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function compressImages(files: File[], maxImages = 10): Promise<string[]> {
+  const results: string[] = [];
+  const limitedFiles = files.slice(0, maxImages);
+  
+  for (const file of limitedFiles) {
+    try {
+      const compressed = await compressImage(file);
+      results.push(compressed);
+    } catch (err) {
+      console.error("Erro ao comprimir imagem:", err);
+    }
+  }
+  
+  return results;
 }
 
 /**
@@ -15,7 +75,6 @@ export function resolveImageUrl(path: string | undefined | null): string {
   if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  // Relative path from backend static files
   const base = getApiUrl().replace(/\/$/, '');
   return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }

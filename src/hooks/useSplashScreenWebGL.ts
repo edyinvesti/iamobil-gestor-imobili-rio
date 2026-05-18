@@ -26,15 +26,22 @@ export function useSplashScreenWebGL(canvasRef: React.RefObject<HTMLCanvasElemen
       const fs = `precision mediump float;uniform vec3 uColor;varying float vAlpha;void main(){float d=distance(gl_PointCoord,vec2(.5));if(d>.5)discard;float a=(1.-d*2.)*vAlpha;gl_FragColor=vec4(uColor,a);}`;
       
       const mkS = (type: number, src: string) => {
-        const sh = gl.createShader(type)!;
+        const sh = gl.createShader(type);
+        if (!sh) return null;
         gl.shaderSource(sh, src);
         gl.compileShader(sh);
         return sh;
       };
 
-      const prog = gl.createProgram()!;
-      gl.attachShader(prog, mkS(gl.VERTEX_SHADER, vs));
-      gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, fs));
+      const prog = gl.createProgram();
+      if (!prog) return () => { window.removeEventListener('resize', resizeCanvas); };
+      
+      const vsShader = mkS(gl.VERTEX_SHADER, vs);
+      const fsShader = mkS(gl.FRAGMENT_SHADER, fs);
+      if (!vsShader || !fsShader) return () => { window.removeEventListener('resize', resizeCanvas); };
+      
+      gl.attachShader(prog, vsShader);
+      gl.attachShader(prog, fsShader);
       gl.linkProgram(prog);
       gl.useProgram(prog);
 
@@ -116,7 +123,10 @@ export function useSplashScreenWebGL(canvasRef: React.RefObject<HTMLCanvasElemen
       draw();
     } else {
       // 2D Fallback
-      const c2 = canvas.getContext('2d')!;
+      const ctx2d = canvas.getContext('2d');
+      if (!ctx2d) return () => { window.removeEventListener('resize', resizeCanvas); };
+      
+      const c2 = ctx2d;
       const pts = Array.from({ length: 180 }, () => ({
         x: Math.random(), y: Math.random(), 
         vx: (Math.random() - 0.5) * 0.0003, vy: (Math.random() - 0.5) * 0.0003, 

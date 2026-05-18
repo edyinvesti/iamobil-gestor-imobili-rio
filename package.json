@@ -12,13 +12,16 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
     "@google/genai": "^1.32.0",
     "@libsql/client": "^0.17.3",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.100.9",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.5.2",
+    "express-validator": "^7.3.2",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.559.0",
     "react": "^19.2.1",
@@ -26,12 +29,13 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.0",
     "remark-gfm": "^4.0.1",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^8.2.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

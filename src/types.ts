@@ -45,4 +45,5 @@ export interface UserProfile {
   email: string;
   phone: string;
   telegramId?: string;
+  password?: string;
 }

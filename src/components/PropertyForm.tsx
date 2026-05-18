@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Property, PropertyType, OfferType, PropertyStatus, AreaUnit } from '../types';
 import { X, Camera, MapPin, Bed, Trash2, CheckCircle2, DollarSign, Square, Target, Car } from 'lucide-react';
+import { compressImage } from '../utils';
 
 interface PropertyFormProps {
     onSave: (property: Property) => void;
@@ -53,14 +54,23 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
     const [images, setImages] = useState<string[]>(initialData?.images || []);
     const [states, setStates] = useState<{ sigla: string, nome: string }[]>([]);
     const [cities, setCities] = useState<string[]>([]);
+    const [statesLoading, setStatesLoading] = useState(true);
+    const [citiesLoading, setCitiesLoading] = useState(false);
+    const [cepError, setCepError] = useState<string | null>(null);
 
     React.useEffect(() => {
         const fetchStates = async () => {
             try {
                 const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
                 setStates(data.map((s: any) => ({ sigla: s.sigla, nome: s.nome })));
-            } catch (err) { console.error("Erro IBGE Estados:", err); }
+            } catch (err) { 
+                console.error("Erro IBGE Estados:", err); 
+                setStates([{ sigla: 'GO', nome: 'Goiás' }, { sigla: 'SP', nome: 'São Paulo' }]);
+            } finally {
+                setStatesLoading(false);
+            }
         };
         fetchStates();
     }, []);
@@ -68,26 +78,42 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
     React.useEffect(() => {
         if (formData.state && formData.state.length === 2) {
             const fetchCities = async () => {
+                setCitiesLoading(true);
                 try {
                     const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.state}/municipios?orderBy=nome`);
+                    if (!response.ok) throw new Error('Failed to fetch');
                     const data = await response.json();
                     setCities(data.map((c: any) => c.nome));
-                } catch (err) { console.error("Erro IBGE Cidades:", err); }
+                } catch (err) { 
+                    console.error("Erro IBGE Cidades:", err); 
+                    setCities([]);
+                } finally {
+                    setCitiesLoading(false);
+                }
             };
             fetchCities();
         }
     }, [formData.state]);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files) {
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setImages(prev => [...prev, reader.result as string]);
-                };
-                reader.readAsDataURL(file);
-            });
+            const remainingSlots = 10 - images.length;
+            if (remainingSlots <= 0) {
+                alert('Máximo de 10 imagens por imóvel.');
+                return;
+            }
+            
+            const filesToProcess = Array.from(files).slice(0, remainingSlots);
+            
+            for (const file of filesToProcess) {
+                try {
+                    const compressed = await compressImage(file);
+                    setImages(prev => [...prev, compressed]);
+                } catch (err) {
+                    console.error("Erro ao comprimir imagem:", err);
+                }
+            }
         }
     };
 
@@ -131,21 +157,26 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ onSave, onCancel, in
 
     const handleCEPBlur = async () => {
         const cep = formData.zipCode?.replace(/\D/g, '');
+        setCepError(null);
         if (cep?.length === 8) {
             try {
                 const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                if (!response.ok) throw new Error('CEP not found');
                 const data = await response.json();
-                if (!data.erro) {
+                if (data.erro) {
+                    setCepError('CEP não encontrado');
+                } else {
                     setFormData(prev => ({
                         ...prev,
-                        address: data.logradouro,
-                        neighborhood: data.bairro,
-                        city: data.localidade,
-                        state: data.uf
+                        address: data.logradouro || '',
+                        neighborhood: data.bairro || '',
+                        city: data.localidade || '',
+                        state: data.uf || ''
                     }));
                 }
             } catch (error) {
                 console.error("Erro ao buscar CEP:", error);
+                setCepError('Erro ao buscar CEP');
             }
         }
     };

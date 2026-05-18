@@ -18,7 +18,7 @@ import { Property } from "./types";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const { properties, saveProperty, deleteProperty, forceSync, loading } = useProperties();
+  const { properties, saveProperty, deleteProperty, forceSync, loading, syncStatus } = useProperties();
   const { profile, updateProfile, logout } = useUser();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
@@ -32,7 +32,6 @@ export default function App() {
     navigate('/');
   };
 
-  // Helper to sync view state for legacy components if needed
   const currentView = location.pathname.split('/')[1] || 'dashboard';
 
   const handleSaveProperty = async (property: Property) => {
@@ -96,6 +95,7 @@ export default function App() {
                     onEdit={(p) => { setSelectedProperty(p); navigate('/form'); }}
                     onSync={forceSync}
                     loading={loading}
+                    syncStatus={syncStatus}
                   />
                 </motion.div>
               } />
@@ -160,4 +160,3 @@ export default function App() {
     </div>
   );
 }
-
