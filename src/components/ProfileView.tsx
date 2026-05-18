@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUser } from '../context/UserContext';
-import { User, ShieldCheck, Mail, Phone, Camera, Save, CheckCircle2 } from 'lucide-react';
+import { User, ShieldCheck, Mail, Phone, Camera, Save, CheckCircle2, Send } from 'lucide-react';
 
 export function ProfileView() {
   const { profile, updateProfile } = useUser();
@@ -124,6 +124,10 @@ export function ProfileView() {
                 <Phone size={13} className="text-orange-500 shrink-0" />
                 <span className="text-[11px] text-gray-400 font-bold">{formData.phone || '—'}</span>
               </div>
+              <div className="flex items-center gap-3">
+                <Send size={13} className="text-orange-500 shrink-0" />
+                <span className="text-[11px] text-gray-400 font-bold">{formData.telegramId || '—'}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -184,6 +188,18 @@ export function ProfileView() {
                   value={formData.phone}
                   onChange={handlePhoneChange}
                   placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">
+                  Telegram (ID ou @usuario)
+                </label>
+                <input
+                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3.5 text-white text-sm font-bold outline-none focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700"
+                  value={formData.telegramId || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, telegramId: e.target.value }))}
+                  placeholder="@usuario ou 123456789"
                 />
               </div>
 

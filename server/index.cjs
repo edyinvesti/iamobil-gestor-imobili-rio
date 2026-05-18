@@ -6,7 +6,26 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const winston = require('winston');
 const bcrypt = require('bcryptjs');
-const { HermesGateway } = require('./hermes-gateway-adapter.cjs');
+const { HermesGateway } = require(path.join(__dirname, 'hermes-gateway-adapter.cjs'));
+
+// TelegramService inline
+const TELEGRAM_BOT_TOKEN_2 = process.env.TELEGRAM_BOT_TOKEN;
+class TelegramService {
+  constructor() { 
+    this.analytics = { messagesReceived: 0, messagesSent: 0, startTime: Date.now() }; 
+    this.conversations = new Map();
+  }
+  getMainKeyboard() { return { keyboard: [[{ text: '🏠 Meus Imóveis' }, { text: '👥 Meus Leads' }],[{ text: '📅 Agendamentos' }, { text: '📊 Dashboard' }],[{ text: '❓ Ajuda' }, { text: '⚙️ Configurações' }]], resize_keyboard: true }; }
+  getBackKeyboard() { return { keyboard: [[{ text: '🔙 Menu Principal' }]], resize_keyboard: true }; }
+  async sendMessage(chatId, text, options) { if (!TELEGRAM_BOT_TOKEN_2) return { ok: false }; try { let r = await fetch('https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN_2 + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chatId, text: String(text).slice(0, 4096), reply_markup: options?.reply_markup }) }); this.analytics.messagesSent++; return await r.json(); } catch (e) { return { ok: false }; } }
+  async sendWelcomeMessage(chatId, userName) { return this.sendMessage(chatId, '🤖 Bem-vindo!\n\nOlá ' + userName + '!\n\nRecursos:\n🏠 Meus Imóveis\n👥 Meus Leads\n📅 Agendamentos\n📊 Dashboard', { reply_markup: this.getMainKeyboard() }); }
+  async sendHelpMessage(chatId) { return this.sendMessage(chatId, '❓ Ajuda\n\n/start - Iniciar\n/help - Esta ajuda\n/imoveis - Imóveis\n/leads - Leads\n/agenda - Agenda\n/dashboard - Resumo\n/stats - Estatísticas\n/limpar - Limpar', { reply_markup: this.getMainKeyboard() }); }
+  addToConversation(chatId, role, content) { if (!this.conversations.has(chatId)) this.conversations.set(chatId, []); const h = this.conversations.get(chatId); h.push({ role, content, timestamp: Date.now() }); if (h.length > 20) h.shift(); this.conversations.set(chatId, h); }
+  getConversationHistory(chatId) { return this.conversations.get(chatId) || []; }
+  clearConversation(chatId) { this.conversations.delete(chatId); }
+  getAnalytics() { return { ...this.analytics, uptime: Date.now() - this.analytics.startTime, activeConversations: this.conversations.size }; }
+  trackAnalytics(cmd) { this.analytics.messagesReceived++; if (cmd) this.analytics.commandsUsed = this.analytics.commandsUsed || {}; if (cmd) this.analytics.commandsUsed[cmd] = (this.analytics.commandsUsed[cmd] || 0) + 1; }
+}
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -41,10 +60,10 @@ try {
 }
 
 const PORT = process.env.PORT || 10000;
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 12;
 
 const app = express();
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -89,6 +108,114 @@ logger.info('Server starting', {
 });
 
 const hermes = new HermesGateway();
+const telegramService = new TelegramService();
+const telegramUsers = new Map();
+const rateLimitTracker = new Map();
+const userTranslations = new Map();
+
+function checkUserRateLimit(chatId) {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxMessages = 30;
+  
+  if (!rateLimitTracker.has(chatId)) {
+    rateLimitTracker.set(chatId, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  
+  const tracker = rateLimitTracker.get(chatId);
+  
+  if (now > tracker.resetAt) {
+    rateLimitTracker.set(chatId, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  
+  if (tracker.count >= maxMessages) {
+    return false;
+  }
+  
+  tracker.count++;
+  return true;
+}
+
+function translate(text, lang) {
+  const translations = {
+    pt: {
+      start: 'Iniciar conversa',
+      help: 'Central de Ajuda',
+      properties: 'Seus Imóveis',
+      leads: 'Seus Leads',
+      appointments: 'Seus Agendamentos',
+      dashboard: 'Resumo Geral',
+      settings: 'Configurações',
+      welcome: 'Bem-vindo ao IAmobil Gestor!'
+    },
+    en: {
+      start: 'Start conversation',
+      help: 'Help Center',
+      properties: 'Your Properties',
+      leads: 'Your Leads',
+      appointments: 'Your Appointments',
+      dashboard: 'General Summary',
+      settings: 'Settings',
+      welcome: 'Welcome to IAmobil Gestor!'
+    },
+    es: {
+      start: 'Iniciar conversación',
+      help: 'Centro de Ayuda',
+      properties: 'Tus Inmuebles',
+      leads: 'Tus Leads',
+      appointments: 'Tus Citas',
+      dashboard: 'Resumen General',
+      settings: 'Configuración',
+      welcome: '¡Bienvenido a IAmobil Gestor!'
+    }
+  };
+  
+  return translations[lang]?.[text] || translations.pt[text] || text;
+}
+
+async function processWithAI(message, context = {}) {
+  const systemPrompt = `Você é o Hermes, assistente inteligente da IAmobil - plataforma de gestão imobiliária. 
+Ajude o usuário com:
+- Informações sobre imóveis
+- Agendamento de visitas
+- Consulta de leads
+- Dúvidas sobre o sistema
+
+Seja breve, profissional e responda sempre em português brasileiro.
+Evite usar markdown complexo que possa causar erros de parsing.`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: message }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          }
+        })
+      }
+    );
+
+    const data = await response.json();
+    
+    if (data.error) {
+      return `Erro: ${data.error.message}`;
+    }
+
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 
+           "Desculpe, não consegui processar sua solicitação.";
+  } catch (e) {
+    logger.error('AI processing error', { error: e.message });
+    return `Erro ao processar: ${e.message}`;
+  }
+}
 
 async function setupTelegramWebhook() {
   if (!TELEGRAM_BOT_TOKEN) {
@@ -97,25 +224,453 @@ async function setupTelegramWebhook() {
   }
   
   const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-  if (!webhookUrl) {
-    logger.warn('TELEGRAM_WEBHOOK_URL not configured');
+  
+  if (webhookUrl) {
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: webhookUrl })
+        }
+      );
+      const result = await response.json();
+      logger.info('Telegram webhook configured', { ok: result.ok, description: result.description });
+    } catch (e) {
+      logger.error('Failed to configure Telegram webhook', { error: e.message });
+    }
+  } else {
+    logger.info('No webhook URL configured, starting polling mode');
+    startPolling();
+  }
+}
+
+let pollingOffset = 0;
+let pollingInterval = null;
+let pollingActive = true;
+
+async function startPolling() {
+  const poll = async () => {
+    if (!pollingActive) return;
+    
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${pollingOffset}&timeout=10`,
+        { method: 'GET' }
+      );
+      
+      if (!response.ok) {
+        await new Promise(r => setTimeout(r, 5000));
+        return;
+      }
+      
+      const data = await response.json();
+      if (!data.ok || !data.result?.length) return;
+      
+      pollingActive = false;
+      
+      for (const update of data.result) {
+        pollingActive = true;
+        pollingOffset = update.update_id + 1;
+        
+        if (update.message) {
+          await handleTelegramMessage(update.message);
+        }
+      }
+      
+      pollingActive = true;
+    } catch (e) {
+      logger.error('Polling error', { error: e.message });
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  };
+  
+  pollingInterval = setInterval(poll, 2000);
+  poll();
+}
+
+async function handleTelegramMessage(message) {
+  const chatId = message.chat.id;
+  let text = message.text || '';
+  const username = message.chat.username || message.chat.first_name || 'Usuário';
+  
+  text = sanitizeInput(text);
+  
+  if (!checkUserRateLimit(chatId)) {
+    await telegramService.sendMessage(chatId, '⏳ Muitas mensagens. Aguarde um momento.');
     return;
   }
   
-  try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: webhookUrl })
-      }
-    );
-    const result = await response.json();
-    logger.info('Telegram webhook configured', { ok: result.ok, description: result.description });
-  } catch (e) {
-    logger.error('Failed to configure Telegram webhook', { error: e.message });
+  const userLang = userTranslations.get(chatId) || 'pt';
+  telegramService.trackAnalytics(text.split(' ')[0]);
+  logger.info('Telegram message received', { chatId, text: text.slice(0, 50) });
+
+  const commands = {
+    '/start': async () => {
+      telegramService.clearConversation(chatId);
+      telegramUsers.set(chatId, { username, startTime: Date.now() });
+      await telegramService.sendWelcomeMessage(chatId, username);
+    },
+    '/help': async () => {
+      await telegramService.sendHelpMessage(chatId);
+    },
+    '/limpar': async () => {
+      telegramService.clearConversation(chatId);
+      await telegramService.sendMessage(chatId, '🗑️ Histórico limpo!', {
+        reply_markup: telegramService.getMainKeyboard()
+      });
+    },
+    '/imoveis': async () => {
+      await handleListProperties(chatId);
+    },
+    '/leads': async () => {
+      await handleListLeads(chatId);
+    },
+    '/agenda': async () => {
+      await handleListAppointments(chatId);
+    },
+    '/dashboard': async () => {
+      await handleDashboard(chatId);
+    },
+    '/stats': async () => {
+      await handleStats(chatId);
+    },
+    '/idioma': async () => {
+      const nextLang = userLang === 'pt' ? 'en' : userLang === 'en' ? 'es' : 'pt';
+      userTranslations.set(chatId, nextLang);
+      const langNames = { pt: 'Português', en: 'English', es: 'Español' };
+      await telegramService.sendMessage(chatId, `🌐 Idioma: ${langNames[nextLang]}`, {
+        reply_markup: telegramService.getMainKeyboard()
+      });
+    },
+    '/buscar': async () => {
+      await telegramService.sendMessage(chatId, '🔍 *Busca de Imóveis*\n\nUse:\n`/buscar casa goiania`\n`/buscar apartamento 500000`\n`/buscar terreno`', {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+    },
+    '🏠 Meus Imóveis': async () => {
+      await handleListProperties(chatId);
+    },
+    '👥 Meus Leads': async () => {
+      await handleListLeads(chatId);
+    },
+    '📅 Agendamentos': async () => {
+      await handleListAppointments(chatId);
+    },
+    '📊 Dashboard': async () => {
+      await handleDashboard(chatId);
+    },
+    '❓ Ajuda': async () => {
+      await telegramService.sendHelpMessage(chatId);
+    },
+    '⚙️ Configurações': async () => {
+      await handleSettings(chatId);
+    },
+    '🔙 Menu Principal': async () => {
+      await telegramService.sendMessage(chatId, ' Menu Principal:', {
+        reply_markup: telegramService.getMainKeyboard()
+      });
+    }
+  };
+
+  if (text.startsWith('/buscar ')) {
+    await handleSearch(chatId, text.replace('/buscar ', ''));
+    return;
   }
+
+  if (commands[text]) {
+    await commands[text]();
+    return;
+  }
+
+  telegramService.addToConversation(chatId, 'user', text);
+  const history = telegramService.getConversationHistory(chatId);
+  
+  let contextPrompt = text;
+  if (history.length > 1) {
+    const previousMessages = history.slice(-6, -1).map(m => `${m.role}: ${m.content}`).join('\n');
+    contextPrompt = `Histórico:\n${previousMessages}\n\nUsuário: ${text}`;
+  }
+
+  if (!GEMINI_API_KEY) {
+    await telegramService.sendMessage(chatId, '⚠️ IA não configurada.');
+    return;
+  }
+
+  try {
+    const reply = await processWithAI(contextPrompt);
+    telegramService.addToConversation(chatId, 'assistant', reply);
+    await telegramService.sendMessage(chatId, reply, {
+      reply_markup: telegramService.getMainKeyboard()
+    });
+    logger.info('AI response sent', { chatId, replyLength: reply.length });
+  } catch (e) {
+    logger.error('AI response error', { error: e.message });
+    await telegramService.sendMessage(chatId, '❌ Erro ao processar. Tente novamente.');
+  }
+}
+
+async function handleSearch(chatId, query) {
+  if (!DataEngine) {
+    await telegramService.sendMessage(chatId, '📭 Sistema de busca indisponível.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+    return;
+  }
+
+  try {
+    const properties = await DataEngine.getProperties();
+    const terms = query.toLowerCase().split(' ');
+    
+    const results = properties.filter(p => {
+      const searchable = `${p.title} ${p.address} ${p.city || ''} ${p.type || ''}`.toLowerCase();
+      return terms.some(term => searchable.includes(term)) ||
+             (p.price && terms.some(term => !isNaN(term) && p.price <= parseFloat(term)));
+    });
+
+    if (!results.length) {
+      await telegramService.sendMessage(chatId, `🔍 Nenhum imóvel encontrado para "${query}"`, {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+      return;
+    }
+
+    let message = `🔍 *Resultados para "${query}"*\n\n`;
+    results.slice(0, 5).forEach((p, i) => {
+      const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price || 0);
+      message += `${i + 1}. *${p.title}*\n   ${price}\n   📍 ${p.city || p.address || 'N/C'}\n\n`;
+    });
+
+    await telegramService.sendMessage(chatId, message, {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  } catch (e) {
+    logger.error('Search error', { error: e.message });
+    await telegramService.sendMessage(chatId, '❌ Erro na busca.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  }
+}
+
+async function handleListProperties(chatId) {
+  if (!DataEngine) {
+    await telegramService.sendMessage(chatId, '📭 Nenhum imóvel cadastrado.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+    return;
+  }
+
+  try {
+    const properties = await DataEngine.getProperties();
+    
+    if (!properties.length) {
+      await telegramService.sendMessage(chatId, '📭 Nenhum imóvel cadastrado.', {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+      return;
+    }
+
+    let message = '🏠 *Seus Imóveis*\n\n';
+    properties.slice(0, 5).forEach((p, i) => {
+      const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price || 0);
+      message += `${i + 1}. *${p.title}*\n`;
+      message += `   💰 ${price}\n`;
+      message += `   📍 ${p.city || p.address || 'Localização não informada'}\n`;
+      message += `   📌 Status: ${p.status || 'Disponível'}\n\n`;
+    });
+
+    if (properties.length > 5) {
+      message += `_Mostrando 5 de ${properties.length} imóveis_\n\n`;
+      message += `Use /buscar para filtrar`;
+    }
+
+    await telegramService.sendMessage(chatId, message, {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+
+    if (properties[0]?.images) {
+      const firstProp = properties[0];
+      await telegramService.sendPhoto(chatId, firstProp.images, `📷 Foto de ${firstProp.title}`, {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+    }
+  } catch (e) {
+    logger.error('Properties fetch error', { error: e.message });
+    await telegramService.sendMessage(chatId, '❌ Erro ao buscar imóveis.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  }
+}
+
+async function handleListLeads(chatId) {
+  if (!DataEngine) {
+    await telegramService.sendMessage(chatId, '📭 Nenhum lead cadastrado.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+    return;
+  }
+
+  try {
+    const leads = await DataEngine.getLeads();
+    
+    if (!leads.length) {
+      await telegramService.sendMessage(chatId, '📭 Nenhum lead encontrado.', {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+      return;
+    }
+
+    const statusEmoji = { 'quente': '🔥', 'morno': '🌡️', 'frio': '❄️', 'novo': '🆕', 'convertido': '✅' };
+    
+    let message = '👥 *Seus Leads*\n\n';
+    leads.slice(0, 5).forEach((l, i) => {
+      message += `${i + 1}. *${l.name}*\n`;
+      message += `   📞 ${l.phone || l.contact || 'Não informado'}\n`;
+      message += `   🎯 ${l.notes || 'A definir'}\n`;
+      message += `   ${statusEmoji[l.status] || '📌'} Score: ${l.score || 'N/C'}\n\n`;
+    });
+
+    if (leads.length > 5) {
+      message += `_Mostrando 5 de ${leads.length} leads_`;
+    }
+
+    await telegramService.sendMessage(chatId, message, {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  } catch (e) {
+    logger.error('Leads fetch error', { error: e.message });
+    await telegramService.sendMessage(chatId, '❌ Erro ao buscar leads.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  }
+}
+
+async function handleListAppointments(chatId) {
+  if (!DataEngine) {
+    await telegramService.sendMessage(chatId, '📭 Nenhum agendamento.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+    return;
+  }
+
+  try {
+    const appointments = await DataEngine.getAppointments();
+    
+    if (!appointments.length) {
+      await telegramService.sendMessage(chatId, '📭 Nenhum agendamento.', {
+        reply_markup: telegramService.getBackKeyboard()
+      });
+      return;
+    }
+
+    let message = '📅 *Seus Agendamentos*\n\n';
+    appointments.slice(0, 5).forEach((a, i) => {
+      message += `${i + 1}. *${a.lead_id || 'Cliente'}*\n`;
+      message += `   🏠 Imóvel: ${a.property_id || 'A definir'}\n`;
+      message += `   📆 ${a.date || 'Data'}\n\n`;
+    });
+
+    if (appointments.length > 5) {
+      message += `_Mostrando 5 de ${appointments.length} agendamentos_`;
+    }
+
+    await telegramService.sendMessage(chatId, message, {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  } catch (e) {
+    logger.error('Appointments fetch error', { error: e.message });
+    await telegramService.sendMessage(chatId, '❌ Erro ao buscar agendamentos.', {
+      reply_markup: telegramService.getBackKeyboard()
+    });
+  }
+}
+
+async function handleDashboard(chatId) {
+  let propertiesCount = 0;
+  let leadsCount = 0;
+  let appointmentsCount = 0;
+  let hotLeads = 0;
+
+  if (DataEngine) {
+    try {
+      const [properties, leads, appointments] = await Promise.all([
+        DataEngine.getProperties().catch(() => []),
+        DataEngine.getLeads().catch(() => []),
+        DataEngine.getAppointments().catch(() => [])
+      ]);
+      propertiesCount = properties.length;
+      leadsCount = leads.length;
+      appointmentsCount = appointments.length;
+      hotLeads = leads.filter(l => l.status === 'quente').length;
+    } catch (e) {
+      logger.warn('Dashboard data fetch partial error', { error: e.message });
+    }
+  }
+
+  const analytics = telegramService.getAnalytics();
+  const uptimeHours = Math.floor(analytics.uptime / (1000 * 60 * 60));
+  const uptimeMinutes = Math.floor((analytics.uptime % (1000 * 60 * 60)) / (1000 * 60));
+
+  const message = `📊 *Dashboard IAmobil*\n\n` +
+    `*Visão Geral:*\n\n` +
+    `🏠 Imóveis: ${propertiesCount}\n` +
+    `👥 Leads: ${leadsCount} (🔥 ${hotLeads} quentes)\n` +
+    `📅 Agendamentos: ${appointmentsCount}\n\n` +
+    `*Estatísticas do Bot:*\n\n` +
+    `💬 Recebidas: ${analytics.messagesReceived}\n` +
+    `📤 Enviadas: ${analytics.messagesSent}\n` +
+    `💭 Conversas: ${analytics.activeConversations}\n` +
+    `⏱️ Uptime: ${uptimeHours}h ${uptimeMinutes}m`;
+
+  await telegramService.sendMessage(chatId, message, {
+    reply_markup: telegramService.getMainKeyboard()
+  });
+}
+
+async function handleStats(chatId) {
+  const analytics = telegramService.getAnalytics();
+  const topCommands = Object.entries(analytics.commandsUsed)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  let message = `📈 *Estatísticas*\n\n`;
+  message += `💬 Total: ${analytics.messagesReceived}\n`;
+  message += `📤 Enviadas: ${analytics.messagesSent}\n`;
+  message += `💭 Conversas: ${analytics.activeConversations}\n\n`;
+  message += `*Comandos mais usados:*\n`;
+
+  if (topCommands.length) {
+    topCommands.forEach(([cmd, count], i) => {
+      message += `${i + 1}. ${cmd}: ${count}x\n`;
+    });
+  } else {
+    message += `_Nenhum comando usado_`;
+  }
+
+  await telegramService.sendMessage(chatId, message, {
+    reply_markup: telegramService.getMainKeyboard()
+  });
+}
+
+async function handleSettings(chatId) {
+  const user = telegramUsers.get(chatId);
+  const linked = user?.creci ? `✅ Vinculado (${user.creci})` : '❌ Não vinculado';
+  const lang = userTranslations.get(chatId) || 'pt';
+  const langNames = { pt: 'Português', en: 'English', es: 'Español' };
+
+  const message = `⚙️ *Configurações*\n\n` +
+    `👤 Telegram ID: ${chatId}\n` +
+    `🔗 Status: ${linked}\n` +
+    `🌐 Idioma: ${langNames[lang]}\n\n` +
+    `📋 *Comandos:*\n` +
+    `/idioma - Trocar idioma\n` +
+    `/stats - Estatísticas\n` +
+    `/limpar - Limpar histórico`;
+
+  await telegramService.sendMessage(chatId, message, {
+    reply_markup: telegramService.getBackKeyboard()
+  });
 }
 
 setTimeout(setupTelegramWebhook, 2000);
@@ -178,11 +733,6 @@ async function sendTelegramMessage(chatId, text) {
   }
 }
 
-async function processWithAI(message) {
-  const result = await hermes.processMessage(message);
-  return result.response;
-}
-
 app.post('/api/auth/register',
   authLimiter,
   body('creci').isLength({ min: 3, max: 20 }).trim(),
@@ -197,7 +747,7 @@ app.post('/api/auth/register',
         return res.status(400).json({ error: 'Dados inválidos', details: errors.array() });
       }
 
-      const { creci, password, name, email, phone } = req.body;
+      const { creci, password, name, email, phone, telegramId } = req.body;
       const safeCreci = sanitizeInput(creci);
 
       if (users.has(safeCreci)) {
@@ -213,6 +763,7 @@ app.post('/api/auth/register',
         name: sanitizeInput(name),
         email: sanitizeInput(email),
         phone: sanitizeInput(phone || ''),
+        telegramId: telegramId ? sanitizeInput(telegramId) : '',
         createdAt: Date.now()
       };
 
@@ -260,7 +811,7 @@ app.post('/api/auth/login',
       res.json({ 
         success: true, 
         token,
-        user: { creci: safeCreci, name: user.name, email: user.email, phone: user.phone }
+        user: { creci: safeCreci, name: user.name, email: user.email, phone: user.phone, telegramId: user.telegramId }
       });
     } catch (e) {
       logger.error('Login error', { error: e.message });
@@ -274,45 +825,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
     const update = req.body;
     
     if (update.message) {
-      const chatId = update.message.chat.id;
-      let text = update.message.text;
-      
-      if (!text && update.message.entities) {
-        text = update.message.text || '';
-      }
-      
-      if (!text) {
-        return res.send('OK');
-      }
-      
-      text = sanitizeInput(text);
-      
-      logger.info('Telegram message received', { chatId, text: text.slice(0, 50) });
-      
-      if (text.startsWith('/start') || text.startsWith('/help')) {
-        await sendTelegramMessage(chatId, 
-          '🤖 *IAmobil Gestor*\n\n' +
-          'Olá! Sou seu assistente imobiliário powered by IA.\n\n' +
-          'Posso ajudar com:\n' +
-          '• Informações de imóveis\n' +
-          '• Agenda de visitas\n' +
-          '• Status da sua carteira\n\n' +
-          'Basta perguntar!'
-        );
-        return res.send('OK');
-      }
-      
-      if (!GEMINI_API_KEY) {
-        logger.error('GEMINI_API_KEY not configured');
-        await sendTelegramMessage(chatId, 'Erro: IA não configurada.');
-        return res.send('OK');
-      }
-      
-      const reply = await processWithAI(text);
-      logger.info('AI response generated', { chatId, replyLength: reply.length });
-      
-      await sendTelegramMessage(chatId, reply);
-      logger.info('Telegram reply sent', { chatId });
+      await handleTelegramMessage(update.message);
     }
     
     res.send('OK');
@@ -322,12 +835,49 @@ app.post('/api/telegram/webhook', async (req, res) => {
   }
 });
 
+app.get('/api/profile/:creci/telegram-id', (req, res) => {
+  const user = users.get(req.params.creci);
+  if (!user) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+  res.json({ telegramId: user.telegramId || null });
+});
+
+app.post('/api/profile/:creci/telegram-id',
+  body('telegramId').isLength({ min: 1, max: 50 }).trim(),
+  (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Telegram ID inválido', details: errors.array() });
+      }
+      const user = users.get(req.params.creci);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+      user.telegramId = sanitizeInput(req.body.telegramId);
+      users.set(req.params.creci, user);
+      logger.info('Telegram ID updated', { creci: req.params.creci });
+      res.json({ success: true, telegramId: user.telegramId });
+    } catch (e) {
+      logger.error('Telegram ID update error', { error: e.message });
+      res.status(500).json({ error: 'Erro interno' });
+    }
+  }
+);
+
 app.get('/api/telegram/status', (req, res) => {
+  const analytics = telegramService.getAnalytics();
   res.json({ 
     status: 'online', 
     bot_token_configured: !!TELEGRAM_BOT_TOKEN,
-    gemini_configured: !!GEMINI_API_KEY 
+    gemini_configured: !!GEMINI_API_KEY,
+    analytics
   });
+});
+
+app.get('/api/telegram/analytics', (req, res) => {
+  res.json(telegramService.getAnalytics());
 });
 
 app.get('/api/hermes/status', (req, res) => {
@@ -368,6 +918,25 @@ if (DataEngine) {
     } catch (e) {
       logger.error('Appointments fetch error', { error: e.message });
       res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+    }
+  });
+
+  app.post('/api/leads', async (req, res) => {
+    try {
+      const lead = {
+        id: `lead_${Date.now()}`,
+        name: req.body.name,
+        phone: req.body.phone,
+        email: req.body.email,
+        source: req.body.source || 'Telegram',
+        status: req.body.status || 'novo'
+      };
+      await DataEngine.addLead(lead);
+      logger.info('Lead created via API', { leadId: lead.id });
+      res.status(201).json({ success: true, lead });
+    } catch (e) {
+      logger.error('Lead creation error', { error: e.message });
+      res.status(500).json({ error: 'Erro ao criar lead' });
     }
   });
 }
