@@ -19,6 +19,9 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         value: "YOUR_TELEGRAM_BOT_TOKEN_HERE"
         sync: false
+      - key: TELEGRAM_WEBHOOK_URL
+        value: https://iamobil-gestor-imobili-rio.onrender.com/api/telegram/webhook
+        sync: false
       - key: NODE_ENV
         value: production
         sync: false

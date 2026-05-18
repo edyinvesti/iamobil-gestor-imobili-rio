@@ -45,8 +45,6 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 12;
 
 const app = express();
-
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -81,13 +79,46 @@ app.use('/api/', apiLimiter);
 app.use(express.static(path.join(__dirname, '../dist')));
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
 logger.info('Server starting', { 
   port: PORT, 
   geminiConfigured: !!GEMINI_API_KEY,
+  telegramConfigured: !!TELEGRAM_BOT_TOKEN,
   corsOrigins: allowedOrigins 
 });
 
 const hermes = new HermesGateway();
+
+async function setupTelegramWebhook() {
+  if (!TELEGRAM_BOT_TOKEN) {
+    logger.warn('TELEGRAM_BOT_TOKEN not configured');
+    return;
+  }
+  
+  const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+  if (!webhookUrl) {
+    logger.warn('TELEGRAM_WEBHOOK_URL not configured');
+    return;
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: webhookUrl })
+      }
+    );
+    const result = await response.json();
+    logger.info('Telegram webhook configured', { ok: result.ok, description: result.description });
+  } catch (e) {
+    logger.error('Failed to configure Telegram webhook', { error: e.message });
+  }
+}
+
+setTimeout(setupTelegramWebhook, 2000);
 
 const users = new Map();
 
@@ -119,12 +150,32 @@ function validatePropertyData(data) {
 }
 
 async function sendTelegramMessage(chatId, text) {
-  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text })
-  });
-  return response.json();
+  if (!TELEGRAM_BOT_TOKEN) {
+    logger.error('Telegram bot token not configured');
+    return { ok: false };
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: String(text).slice(0, 4096) })
+      }
+    );
+    
+    if (!response.ok) {
+      const error = await response.text();
+      logger.error('Telegram API error', { status: response.status, error });
+      return { ok: false };
+    }
+    
+    return await response.json();
+  } catch (e) {
+    logger.error('Failed to send Telegram message', { error: e.message });
+    return { ok: false };
+  }
 }
 
 async function processWithAI(message) {
@@ -222,11 +273,34 @@ app.post('/api/telegram/webhook', async (req, res) => {
   try {
     const update = req.body;
     
-    if (update.message && update.message.text) {
+    if (update.message) {
       const chatId = update.message.chat.id;
-      const text = sanitizeInput(update.message.text);
+      let text = update.message.text;
+      
+      if (!text && update.message.entities) {
+        text = update.message.text || '';
+      }
+      
+      if (!text) {
+        return res.send('OK');
+      }
+      
+      text = sanitizeInput(text);
       
       logger.info('Telegram message received', { chatId, text: text.slice(0, 50) });
+      
+      if (text.startsWith('/start') || text.startsWith('/help')) {
+        await sendTelegramMessage(chatId, 
+          '🤖 *IAmobil Gestor*\n\n' +
+          'Olá! Sou seu assistente imobiliário powered by IA.\n\n' +
+          'Posso ajudar com:\n' +
+          '• Informações de imóveis\n' +
+          '• Agenda de visitas\n' +
+          '• Status da sua carteira\n\n' +
+          'Basta perguntar!'
+        );
+        return res.send('OK');
+      }
       
       if (!GEMINI_API_KEY) {
         logger.error('GEMINI_API_KEY not configured');
@@ -244,7 +318,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
     res.send('OK');
   } catch (e) {
     logger.error('Webhook error', { error: e.message, stack: e.stack });
-    res.status(500).json({ error: e.message });
+    res.sendStatus(200);
   }
 });
 
